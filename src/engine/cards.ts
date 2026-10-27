@@ -25,6 +25,10 @@ const ACCENT_HEIGHT = 0.08
 const DEAD_DIM = 0.4
 const FILTERED_DIM = 0.18
 const FALLBACK_ACCENT = '#888888'
+const HOVER_SCALE = 0.08
+const HOVER_TILT = 0.2
+const HOVER_GLOW = 0.35
+const WHITE = new Color(0xffffff)
 
 export type TextureLoadFn = (url: string) => Promise<Texture>
 
@@ -144,6 +148,8 @@ export interface Card {
   readonly face: Mesh<BufferGeometry, MeshBasicMaterial>
   /** 0..1 visibility from filters; non-matching cards dim. */
   setMatch(matches: boolean): void
+  /** 0..1 hover emphasis: tilts toward the pointer (`tiltX`/`tiltY` in -1..1), scales up and glows. */
+  setHover(amount: number, tiltX?: number, tiltY?: number): void
   setThumbnail(texture: Texture): void
   dispose(): void
 }
@@ -183,6 +189,8 @@ export function createCard(
   group.rotation.order = 'YXZ'
   group.rotation.set(placement.rotationX, placement.rotationY, 0)
 
+  const baseRotation = { x: placement.rotationX, y: placement.rotationY }
+
   const applyOpacity = (): void => {
     const opacity = baseOpacity * (matches ? 1 : FILTERED_DIM)
     faceMaterial.opacity = opacity
@@ -199,6 +207,18 @@ export function createCard(
     setMatch(next) {
       matches = next
       applyOpacity()
+    },
+    setHover(amount, tiltX = 0, tiltY = 0) {
+      const h = Math.min(1, Math.max(0, amount))
+      group.scale.setScalar(1 + HOVER_SCALE * h)
+      group.rotation.set(
+        baseRotation.x - tiltY * HOVER_TILT * h,
+        baseRotation.y + tiltX * HOVER_TILT * h,
+        0,
+      )
+      // Colours above 1 brighten a textured face; flat faces lerp toward white instead.
+      if (faceMaterial.map) faceMaterial.color.setScalar(1 + HOVER_GLOW * h)
+      else faceMaterial.color.copy(accent).lerp(WHITE, HOVER_GLOW * h)
     },
     setThumbnail(texture) {
       if (disposed) return
