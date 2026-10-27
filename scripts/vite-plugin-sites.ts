@@ -32,6 +32,7 @@ export function sitesPlugin(options: SitesPluginOptions): Plugin {
   const generatedPath = resolve(options.generatedPath)
   const overridesPath = resolve(options.overridesPath)
   let outDir = ''
+  let thumbsSrcDir = ''
 
   const load = () =>
     resolveManifest(readRecords(generatedPath, false), readRecords(overridesPath, true))
@@ -40,6 +41,7 @@ export function sitesPlugin(options: SitesPluginOptions): Plugin {
     name: 'hub-sites',
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir)
+      thumbsSrcDir = resolve(config.root, 'public', 'thumbs')
     },
     resolveId(id) {
       return id === VIRTUAL_ID ? RESOLVED_ID : undefined
@@ -48,7 +50,12 @@ export function sitesPlugin(options: SitesPluginOptions): Plugin {
       if (id !== RESOLVED_ID) return undefined
       this.addWatchFile(generatedPath)
       if (existsSync(overridesPath)) this.addWatchFile(overridesPath)
-      return `export const sites = ${JSON.stringify(load().visible)}\n`
+      const sites = load().visible.map((site) =>
+        !site.thumb && existsSync(join(thumbsSrcDir, `${site.id}.webp`))
+          ? { ...site, thumb: `/thumbs/${site.id}.webp` }
+          : site,
+      )
+      return `export const sites = ${JSON.stringify(sites)}\n`
     },
     closeBundle() {
       const thumbsDir = join(outDir, 'thumbs')

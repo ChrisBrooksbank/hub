@@ -1,4 +1,4 @@
-import { SiteSchema } from './schema'
+import { SiteSchema } from './schema.ts'
 
 export type SiteRecord = Record<string, unknown> & { id: string }
 

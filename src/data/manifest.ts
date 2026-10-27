@@ -1,5 +1,5 @@
-import { mergeSites, type SiteRecord } from './merge'
-import { ManifestSchema, type Site } from './schema'
+import { mergeSites, type SiteRecord } from './merge.ts'
+import { ManifestSchema, type Site } from './schema.ts'
 
 /** Validate raw manifest JSON, throwing an Error with one readable line per problem. */
 export function parseManifest(raw: unknown, source = 'manifest'): Site[] {
