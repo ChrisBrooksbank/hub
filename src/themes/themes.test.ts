@@ -37,6 +37,16 @@ describe('theme registry', () => {
     },
   )
 
+  it('retro arcade is a scene theme with a pixel font, static scanlines and arcade copy', () => {
+    const retro = getTheme('retro-arcade')
+    expect(retro.id).toBe('retro-arcade')
+    expect(retro.presentation).toBe('scene')
+    expect(retro.fonts.heading).toContain('Press Start 2P')
+    expect(retro.postFx.scanlines).toBeDefined()
+    expect(retro.motion.cameraShake).toBe(0)
+    expect(retro.copy.launchLabel).toBe('INSERT COIN TO LAUNCH')
+  })
+
   it('basic is a no-animation list theme with system fonts', () => {
     const basic = getTheme('basic')
     expect(basic.id).toBe('basic')
