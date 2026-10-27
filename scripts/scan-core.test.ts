@@ -91,6 +91,16 @@ describe('buildScan', () => {
     expect(result.noUrl).toEqual(['orphan'])
   })
 
+  it('uses a resolved Netlify URL for linked folders', () => {
+    const result = buildScan(
+      [repo({ name: 'mazes' })],
+      [local({ dir: 'mazes', repoName: 'mazes', netlifySiteId: 'abc-123' })],
+      { 'abc-123': 'https://mazes.netlify.app/' },
+    )
+    expect(result.unresolved).toEqual([])
+    expect(result.sites).toMatchObject([{ id: 'mazes', url: 'https://mazes.netlify.app' }])
+  })
+
   it('skips forks, archived and excluded repos', () => {
     const url = 'https://x.netlify.app'
     const result = buildScan(

@@ -10,6 +10,7 @@ import {
   type RepoMeta,
   type ScanResult,
 } from './scan-core.ts'
+import { mapLimit, resolveNetlifyUrl, verifyUrl } from './scan-net.ts'
 
 const ROOT = resolve(dirname(fileURLToPath(import.meta.url)), '..')
 const CODE_DIR = process.env.HUB_CODE_DIR ?? 'C:\\code'
@@ -80,10 +81,59 @@ function discoverLocals(codeDir: string): LocalFolder[] {
   return locals
 }
 
-function report(result: ScanResult): void {
+/** Resolve Netlify site ids for folders with no recorded URL. Token comes from the environment only. */
+async function resolveNetlifyIds(locals: readonly LocalFolder[]): Promise<Record<string, string>> {
+  const ids = [
+    ...new Set(
+      locals.filter((l) => l.urls.length === 0 && l.netlifySiteId).map((l) => l.netlifySiteId!),
+    ),
+  ]
+  if (ids.length === 0) return {}
+  const token = process.env.NETLIFY_AUTH_TOKEN
+  if (!token) {
+    console.warn('NETLIFY_AUTH_TOKEN is not set; skipping Netlify site id resolution.')
+    return {}
+  }
+  const urls = await mapLimit(ids, 4, (id) => resolveNetlifyUrl(id, token))
+  const resolved: Record<string, string> = {}
+  ids.forEach((id, i) => {
+    const url = urls[i]
+    if (url) resolved[id] = url
+  })
+  return resolved
+}
+
+/** Flag sites whose URL does not answer 2xx. Dead sites are kept, never dropped. */
+async function verifySites(result: ScanResult): Promise<void> {
+  const statuses = await mapLimit(result.sites, 8, (site) => verifyUrl(site.url))
+  result.sites.forEach((site, i) => {
+    if (statuses[i] === 'dead') site.status = 'dead'
+  })
+}
+
+function previousSiteIds(): Set<string> {
+  try {
+    const sites = JSON.parse(readFileSync(OUTPUT, 'utf8')) as { id: string }[]
+    return new Set(sites.map((s) => s.id))
+  } catch {
+    return new Set()
+  }
+}
+
+function report(result: ScanResult, previousIds: ReadonlySet<string>): void {
   console.log(`Wrote ${result.sites.length} sites to ${OUTPUT}`)
   const hidden = result.sites.filter((s) => s.hidden).length
   console.log(`  ${hidden} hidden (private repos)`)
+  const added = result.sites.filter((s) => !previousIds.has(s.id))
+  if (previousIds.size > 0 && added.length > 0) {
+    console.log(`New sites (${added.length}):`)
+    for (const s of added) console.log(`  ${s.id} ${s.url}`)
+  }
+  const dead = result.sites.filter((s) => s.status === 'dead')
+  if (dead.length > 0) {
+    console.log(`Dead URLs (${dead.length}):`)
+    for (const s of dead) console.log(`  ${s.id} ${s.url}`)
+  }
   if (result.unresolved.length > 0) {
     console.log(`Netlify-linked, URL not yet resolved (${result.unresolved.length}):`)
     for (const u of result.unresolved) console.log(`  ${u.name} (${u.netlifySiteId})`)
@@ -94,6 +144,9 @@ function report(result: ScanResult): void {
   }
 }
 
-const result = buildScan(listRepos(), discoverLocals(CODE_DIR))
+const previousIds = previousSiteIds()
+const locals = discoverLocals(CODE_DIR)
+const result = buildScan(listRepos(), locals, await resolveNetlifyIds(locals))
+await verifySites(result)
 writeFileSync(OUTPUT, JSON.stringify(result.sites, null, 2) + '\n')
-report(result)
+report(result, previousIds)

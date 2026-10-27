@@ -34,6 +34,7 @@ export interface GeneratedSite {
   language: string | null
   isPrivateRepo: boolean
   lastPushed: string | null
+  status?: 'dead'
   hidden?: true
 }
 
@@ -97,7 +98,16 @@ function byId(a: { id: string }, b: { id: string }): number {
 }
 
 /** Combine `gh repo list` metadata with local folder discovery. Pure and deterministic. */
-export function buildScan(repos: readonly RepoMeta[], locals: readonly LocalFolder[]): ScanResult {
+export function buildScan(
+  repos: readonly RepoMeta[],
+  locals: readonly LocalFolder[],
+  /** Netlify site id to URL, as resolved from the Netlify API. */
+  resolvedUrls: Readonly<Record<string, string>> = {},
+): ScanResult {
+  const localUrl = (local: LocalFolder | undefined): string | undefined =>
+    local?.urls[0] ??
+    (local?.netlifySiteId ? cleanUrl(resolvedUrls[local.netlifySiteId]) : undefined)
+
   const sites = new Map<string, GeneratedSite>()
   const unresolved = new Map<string, Unresolved>()
   const noUrl: string[] = []
@@ -108,7 +118,7 @@ export function buildScan(repos: readonly RepoMeta[], locals: readonly LocalFold
     const local = locals.find((l) => l.repoName?.toLowerCase() === repo.name.toLowerCase())
     if (local) claimedFolders.add(local.dir)
     const id = slugify(repo.name)
-    const url = cleanUrl(repo.homepageUrl) ?? local?.urls[0]
+    const url = cleanUrl(repo.homepageUrl) ?? localUrl(local)
     if (!url) {
       if (local?.netlifySiteId) {
         unresolved.set(id, { id, name: repo.name, netlifySiteId: local.netlifySiteId })
@@ -140,7 +150,7 @@ export function buildScan(repos: readonly RepoMeta[], locals: readonly LocalFold
     if (local.repoName && isExcluded(local.repoName)) continue
     const id = slugify(local.dir)
     if (sites.has(id) || unresolved.has(id)) continue
-    const url = local.urls[0]
+    const url = localUrl(local)
     if (url) {
       sites.set(id, {
         id,
