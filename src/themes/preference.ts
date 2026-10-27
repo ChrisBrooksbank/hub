@@ -48,6 +48,11 @@ export function hasWebGL(doc: Document = document): boolean {
   }
 }
 
+/** True when the visitor asked the OS/browser for reduced motion. */
+export function prefersReducedMotion(match: (query: string) => { matches: boolean }): boolean {
+  return match('(prefers-reduced-motion: reduce)').matches
+}
+
 /** True when the visitor's settings suggest the Basic theme would suit them. */
 export function prefersBasic(match: (query: string) => { matches: boolean }): boolean {
   return (

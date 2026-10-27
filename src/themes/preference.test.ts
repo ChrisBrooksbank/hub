@@ -1,5 +1,12 @@
 import { describe, expect, it, vi } from 'vitest'
-import { loadStoredTheme, prefersBasic, resolveThemeId, saveTheme, STORAGE_KEY } from './preference'
+import {
+  loadStoredTheme,
+  prefersBasic,
+  prefersReducedMotion,
+  resolveThemeId,
+  saveTheme,
+  STORAGE_KEY,
+} from './preference'
 
 const base = { search: '', stored: null, webgl: true }
 
@@ -47,6 +54,14 @@ describe('storage', () => {
     }
     expect(loadStoredTheme(blocked)).toBeNull()
     expect(() => saveTheme('basic', blocked)).not.toThrow()
+  })
+})
+
+describe('prefersReducedMotion', () => {
+  it('reads only the reduced-motion query', () => {
+    const only = (q: string) => (query: string) => ({ matches: query.includes(q) })
+    expect(prefersReducedMotion(only('reduced-motion'))).toBe(true)
+    expect(prefersReducedMotion(only('contrast'))).toBe(false)
   })
 })
 

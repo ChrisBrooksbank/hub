@@ -51,6 +51,8 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [x] Professional theme config + live theme application (colours, fog, lights, fonts, copy) with a ~600ms cross-fade (instant under reduced motion); no `theme.id` branching in the engine (spec: theme-engine.md)
 - [x] Keyboard nav: Tab to chips/search/switcher/cards, arrow keys move selection around the ring; canvas accessible name/description (spec: accessibility-performance.md)
 - [ ] Reduced motion: stop auto-rotation, instant cuts or short fades, no shake or parallax; e2e test that rotation angle does not change over 3s (spec: accessibility-performance.md)
+  - Partial (iteration 29): engine modules already honour `reducedMotion` (controls, selection, theme-applier, scene-filter) with unit tests; added `prefersReducedMotion` helper.
+  - BLOCKER: `src/main.ts` still mounts only the list view; no module composes SceneEngine + CardField + GalleryControls + SelectionController + DetailPanel + ThemeApplier + KeyboardNav. The e2e test needs that mount (dynamic `import()` of three.js, exposing the rotation angle, e.g. `data-rotation` on the canvas). Add a "Scene mount / integration" task before Phase 4 items 10-12 and do it first.
 - [ ] Touch: 44px hit targets, pinch zoom, tap to select (spec: accessibility-performance.md)
 - [ ] Adaptive quality: detect low-power devices (mobile, low `hardwareConcurrency`, slow first frames); lower pixel ratio, drop postFx, cut particles (spec: accessibility-performance.md)
 
