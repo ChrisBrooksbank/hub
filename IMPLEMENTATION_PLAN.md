@@ -14,7 +14,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 ### Phase 1: Foundation (spec: project-foundation.md)
 
 - [x] Initialise Vite + strict TypeScript + vanilla three.js + `zod` project with the module layout `src/engine/ src/themes/ src/data/ src/ui/ scripts/ data/ public/thumbs/`; `main` branch, first commit including the existing untracked files; scripts `dev`, `build` (`tsc -b && vite build`), `preview` (spec: project-foundation.md)
-- [ ] Add ESLint (flat config), Prettier, Vitest (jsdom), Knip; scripts `lint`, `format`, `format:check`, `typecheck`, `test:run`, `check` (typecheck + lint + format:check + test:run). Mirror `C:\code\life` and `C:\code\earth` configs. Include one trivial passing test (spec: project-foundation.md)
+- [x] Add ESLint (flat config), Prettier, Vitest (jsdom), Knip; scripts `lint`, `format`, `format:check`, `typecheck`, `test:run`, `check` (typecheck + lint + format:check + test:run). Mirror `C:\code\life` and `C:\code\earth` configs. Include one trivial passing test (spec: project-foundation.md)
 - [ ] Add Husky + lint-staged pre-commit hook; verify it blocks a commit with a lint error (spec: project-foundation.md)
 - [ ] Add Playwright config + one smoke test (page loads, no console errors) and the `test:e2e` script; follow `C:\code\earth\playwright.config.ts` (spec: project-foundation.md)
 - [ ] Add `netlify.toml` (build command, publish `dist`, security headers, SPA fallback) and `.github/workflows/ci.yml` running `check` + Playwright on push and PR (spec: project-foundation.md)
