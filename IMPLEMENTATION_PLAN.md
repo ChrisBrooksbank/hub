@@ -18,7 +18,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [x] Add Husky + lint-staged pre-commit hook; verify it blocks a commit with a lint error (spec: project-foundation.md)
 - [x] Add Playwright config + one smoke test (page loads, no console errors) and the `test:e2e` script; follow `C:\code\earth\playwright.config.ts` (spec: project-foundation.md)
 - [x] Add `netlify.toml` (build command, publish `dist`, security headers, SPA fallback) and `.github/workflows/ci.yml` running `check` + Playwright on push and PR (spec: project-foundation.md)
-- [ ] Add README: purpose, commands, how to add or hide a site, manual Netlify setup step (spec: project-foundation.md)
+- [x] Add README: purpose, commands, how to add or hide a site, manual Netlify setup step (spec: project-foundation.md)
 
 ### Phase 2: Manifest data layer (spec: site-manifest.md)
 
