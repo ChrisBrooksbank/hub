@@ -30,7 +30,7 @@ Netlify-linked locally with NO recorded URL, so resolve them: breadcrumbs, mazes
 
 Not websites, so exclude by default: Vox, witness, galaga (Rust), hue.*, AI.Prompts, cb-ralph-wiggum, cb-visual-qa, claude-code-*, MCP/CLI repos.
 
-Likely sensitive, so prompt the owner to confirm `hidden`: selfhypnosis, shadow-work, faceit, witness, voicecoach, GranCanariaDec2026.
+Likely sensitive, so prompt the owner to confirm `hidden`: selfhypnosis, shadow-work, faceit, witness, voicecoach.
 
 ## Acceptance Criteria
 

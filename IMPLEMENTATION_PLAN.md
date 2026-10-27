@@ -27,7 +27,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [ ] Pure URL extraction (`*.netlify.app`, `*.azurewebsites.net`, `*.pages.dev`, `*.github.io`, `*.vercel.app`) from README/CLAUDE.md/netlify.toml/`.netlify/state.json`, plus category heuristic (Games, Learning, Wellbeing, Local (Chelmsford), Tools, 3D & Visual, Parliament); unit tests (spec: site-manifest.md)
 - [ ] `scripts/scan` part 1: `gh repo list` + local `C:\code\*` folder discovery; exclusion list for non-websites; writes `data/sites.generated.json` idempotently (spec: site-manifest.md)
 - [ ] `scripts/scan` part 2: Netlify site-id to URL resolution (token from env, never committed), HTTP HEAD/GET verification flagging `status: "dead"`, console report (new sites, dead URLs, repos without URL) (spec: site-manifest.md)
-- [ ] Run the scan for real; confirm >= 25 live entries; seed `data/sites.overrides.json` with `hidden: true` for the likely-sensitive set (selfhypnosis, shadow-work, faceit, witness, voicecoach, GranCanariaDec2026) as a provisional default, and flag in Notes for the owner to confirm (spec: site-manifest.md)
+- [ ] Run the scan for real; confirm >= 25 live entries; seed `data/sites.overrides.json` with `hidden: true` for the likely-sensitive set (selfhypnosis, shadow-work, faceit, witness, voicecoach) as a provisional default, and flag in Notes for the owner to confirm (spec: site-manifest.md)
 - [ ] Vite plugin that merges generated + overrides at build time and strips `hidden` entries before bundling; add a build test that greps `dist/` for a hidden site's id/url and fails if found (spec: site-manifest.md)
 
 ### Phase 3: Accessible list view and Basic theme (build the list once; spec: accessibility-performance.md, theme-engine.md)
