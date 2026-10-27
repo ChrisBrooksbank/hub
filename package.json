@@ -19,7 +19,8 @@
     "prepare": "husky",
     "test:e2e": "playwright test",
     "sites:scan": "node scripts/scan.ts",
-    "sites:shots": "node scripts/shots.ts"
+    "sites:shots": "node scripts/shots.ts",
+    "perf:budget": "node scripts/bundle-budget.ts"
   },
   "dependencies": {
     "three": "^0.186.1",
