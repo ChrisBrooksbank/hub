@@ -44,7 +44,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [x] `SceneEngine` class: renderer, camera, render loop, resize, full disposal (geometries/materials/textures); unit test disposal via mock renderer (spec: scene-gallery.md)
 - [x] Layout strategy interface with `ring` implementation (categories as vertical bands/arcs), then `helix` and `sphere`; pure layout math unit-tested (spec: scene-gallery.md)
 - [x] Card meshes: rounded plane, thumbnail texture via lazy shared cache, name label, category accent, dead-site dimming; use instanced/batched approach for raycasting at 60 cards (spec: scene-gallery.md)
-- [ ] Controls: idle auto-rotation, drag/swipe, wheel/pinch along the axis, inertia damping (spec: scene-gallery.md)
+- [x] Controls: idle auto-rotation, drag/swipe, wheel/pinch along the axis, inertia damping (spec: scene-gallery.md)
 - [ ] Selection: hover tilt/glow + tooltip, click/Enter select, camera easing to card, Escape/Back returns to overview, deep link `#/site/<id>` (spec: scene-gallery.md)
 - [ ] DOM detail panel: name, description, category, tags, language, last updated, thumbnail, Launch (`rel="noopener"`, new tab), repo link if public; focus trap and restore on close (spec: scene-gallery.md, accessibility-performance.md)
 - [ ] Filter chips and search dim non-matching cards (animated) and sync the accessible list; hidden-but-present site list in DOM when scene is shown (spec: scene-gallery.md, accessibility-performance.md)
