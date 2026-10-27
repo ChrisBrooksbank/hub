@@ -36,7 +36,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [x] App shell and state: filter (category chips, search by name/tag/description) as a pure function with unit tests; live region announcing "N sites shown" (spec: scene-gallery.md, accessibility-performance.md)
 - [x] Semantic list view `src/ui/list`: sites grouped by category, headings, links, descriptions, "may be offline" text for dead sites, optional thumbnails with alt text; filter and search wired in (spec: accessibility-performance.md)
 - [x] Basic theme config (`presentation: "list"`): system fonts, black on white, honours `prefers-color-scheme` and `prefers-contrast`, large text, focus outlines, underlined links, no animation; the entry point must `import()` three.js dynamically so Basic never loads it (spec: theme-engine.md)
-- [ ] Theme persistence (`localStorage`, `?theme=` override, default Professional), accessible switcher (labelled radio group), auto-select Basic with no WebGL, suggest Basic on `prefers-reduced-motion` / `prefers-contrast: more`, "List view" toggle (spec: theme-engine.md, accessibility-performance.md)
+- [x] Theme persistence (`localStorage`, `?theme=` override, default Professional), accessible switcher (labelled radio group), auto-select Basic with no WebGL, suggest Basic on `prefers-reduced-motion` / `prefers-contrast: more`, "List view" toggle (spec: theme-engine.md, accessibility-performance.md)
 - [ ] Playwright + axe-core test for the list view (zero serious/critical, 200% zoom) and a bundle test that the initial Basic load ships no three.js; test with WebGL disabled that links work (spec: theme-engine.md, accessibility-performance.md)
 
 ### Phase 4: Scene engine (spec: scene-gallery.md)
