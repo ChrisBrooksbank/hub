@@ -51,7 +51,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [x] Professional theme config + live theme application (colours, fog, lights, fonts, copy) with a ~600ms cross-fade (instant under reduced motion); no `theme.id` branching in the engine (spec: theme-engine.md)
 - [x] Keyboard nav: Tab to chips/search/switcher/cards, arrow keys move selection around the ring; canvas accessible name/description (spec: accessibility-performance.md)
 - [x] Scene mount / integration: `src/ui/scene-mount.ts` composes SceneEngine + CardField + GalleryControls + SelectionController + DetailPanel + ThemeApplier + KeyboardNav + filter bar; `main.ts` reaches it via dynamic `import()` for `presentation: "scene"` themes, exposes `data-rotation` on the canvas; e2e smoke in `e2e/scene.spec.ts` (spec: scene-gallery.md)
-- [ ] Reduced motion: stop auto-rotation, instant cuts or short fades, no shake or parallax; e2e test that rotation angle does not change over 3s (spec: accessibility-performance.md)
+- [x] Reduced motion: stop auto-rotation, instant cuts or short fades, no shake or parallax; e2e test that rotation angle does not change over 3s (spec: accessibility-performance.md)
   - Partial (iteration 29): engine modules already honour `reducedMotion` (controls, selection, theme-applier, scene-filter) with unit tests; added `prefersReducedMotion` helper.
   - Unblocked (iteration 30): scene mount exists and the canvas exposes `data-rotation`; only the e2e rotation test remains.
 - [ ] Touch: 44px hit targets, pinch zoom, tap to select (spec: accessibility-performance.md)
