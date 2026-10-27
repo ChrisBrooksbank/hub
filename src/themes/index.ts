@@ -1,9 +1,10 @@
+import { basic } from './basic'
 import { professional } from './professional'
 import type { Theme } from './types'
 
 export const DEFAULT_THEME_ID = professional.id
 
-export const THEMES: readonly Theme[] = [professional]
+export const THEMES: readonly Theme[] = [professional, basic]
 
 export function getTheme(id: string | null | undefined): Theme {
   return THEMES.find((theme) => theme.id === id) ?? defaultTheme()

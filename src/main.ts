@@ -1,3 +1,4 @@
+import './ui/basic.css'
 import { sites } from 'virtual:sites'
 import { resultsMessage } from './ui/filter'
 import { createListView } from './ui/list'

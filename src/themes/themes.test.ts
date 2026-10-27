@@ -36,4 +36,14 @@ describe('theme registry', () => {
       for (const text of Object.values(t.copy)) expect(text).not.toBe('')
     },
   )
+
+  it('basic is a no-animation list theme with system fonts', () => {
+    const basic = getTheme('basic')
+    expect(basic.id).toBe('basic')
+    expect(basic.presentation).toBe('list')
+    expect(basic.motion.idleSpeed).toBe(0)
+    expect(basic.fonts.body).toContain('system-ui')
+    expect(basic.fonts.stylesheet).toBeUndefined()
+    expect(basic.palette).toMatchObject({ background: '#ffffff', text: '#000000' })
+  })
 })
