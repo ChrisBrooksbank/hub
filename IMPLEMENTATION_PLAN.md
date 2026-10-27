@@ -32,7 +32,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 
 ### Phase 3: Accessible list view and Basic theme (build the list once; spec: accessibility-performance.md, theme-engine.md)
 
-- [ ] `Theme` type in `src/themes/types.ts` with every field listed in the spec; theme registry (plain config objects, engine never branches on `theme.id`); unit test that all registered themes satisfy the type (spec: theme-engine.md)
+- [x] `Theme` type in `src/themes/types.ts` with every field listed in the spec; theme registry (plain config objects, engine never branches on `theme.id`); unit test that all registered themes satisfy the type (spec: theme-engine.md)
 - [ ] App shell and state: filter (category chips, search by name/tag/description) as a pure function with unit tests; live region announcing "N sites shown" (spec: scene-gallery.md, accessibility-performance.md)
 - [ ] Semantic list view `src/ui/list`: sites grouped by category, headings, links, descriptions, "may be offline" text for dead sites, optional thumbnails with alt text; filter and search wired in (spec: accessibility-performance.md)
 - [ ] Basic theme config (`presentation: "list"`): system fonts, black on white, honours `prefers-color-scheme` and `prefers-contrast`, large text, focus outlines, underlined links, no animation; the entry point must `import()` three.js dynamically so Basic never loads it (spec: theme-engine.md)
