@@ -60,6 +60,18 @@ describe('theme registry', () => {
     expect(calm.ambientFx.particles).toBeDefined()
   })
 
+  it('moose mode is a bouncy scene theme with comic type, no camera shake and no flashing fx', () => {
+    const moose = getTheme('moose-mode')
+    expect(moose.id).toBe('moose-mode')
+    expect(moose.presentation).toBe('scene')
+    expect(moose.fonts.heading).toContain('Bangers')
+    expect(moose.motion.hoverStyle).toBe('wobble')
+    expect(moose.motion.cameraShake).toBe(0)
+    expect(moose.postFx.scanlines).toBeUndefined()
+    expect(moose.postFx.grain).toBeUndefined()
+    expect(moose.copy.launchLabel).toBe('ANTLERS FORWARD!')
+  })
+
   it('basic is a no-animation list theme with system fonts', () => {
     const basic = getTheme('basic')
     expect(basic.id).toBe('basic')

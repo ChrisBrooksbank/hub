@@ -70,7 +70,8 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [x] Retro Arcade theme (Press Start 2P, grid floor, neon, CRT scanlines with no flicker above 3Hz, "INSERT COIN TO LAUNCH" copy) (spec: theme-engine.md)
 - [x] Calm / Zen theme (pastel gradient, ~4s in / 6s out drift disabled under reduced motion, soft particles, gentle copy) (spec: theme-engine.md)
   - Drift is approximated by a very slow `idleSpeed` (0.025); the controls already zero it under reduced motion. A true 4s-in/6s-out breathing pulse would need a new `Theme.motion` field plus engine support, which is not built.
-- [ ] Moose Mode theme: first read `C:\code\moose` (README, docs, index.html) for personality, assets and jokes; reuse what fits (spec: theme-engine.md)
+- [x] Moose Mode theme: first read `C:\code\moose` (README, docs, index.html) for personality, assets and jokes; reuse what fits (spec: theme-engine.md)
+  - The moose repo is a calm canvas toy with deadpan captions ("answering nature", "browsing leaves"), with no reusable assets. The theme keeps that caption voice in its copy. Clashing palette, Bangers/Comic Neue, wobble hover and bounce easing, no camera shake or flashing fx.
 - [ ] Theme tests: every theme passes WCAG AA text-on-card contrast; a dummy fifth theme needs zero engine changes; switching 20 times leaks no GPU resources (spec: theme-engine.md)
 
 ### Phase 7: Hardening and acceptance
