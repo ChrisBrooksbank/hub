@@ -9,7 +9,7 @@ export const professional: Theme = {
     surface: '#1e293b',
     text: '#f1f5f9',
     textMuted: '#cbd5e1',
-    accent: '#3b82f6',
+    accent: '#2563eb',
     accentText: '#ffffff',
     danger: '#f87171',
   },

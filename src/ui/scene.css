@@ -46,7 +46,7 @@
 }
 
 .scene-controls button[aria-pressed='true'] {
-  background: var(--theme-accent, #3b82f6);
+  background: var(--theme-accent, #2563eb);
   color: var(--theme-accent-text, #fff);
 }
 

@@ -72,7 +72,8 @@ Priority order. Each task = one build iteration. Dependencies come first.
   - Drift is approximated by a very slow `idleSpeed` (0.025); the controls already zero it under reduced motion. A true 4s-in/6s-out breathing pulse would need a new `Theme.motion` field plus engine support, which is not built.
 - [x] Moose Mode theme: first read `C:\code\moose` (README, docs, index.html) for personality, assets and jokes; reuse what fits (spec: theme-engine.md)
   - The moose repo is a calm canvas toy with deadpan captions ("answering nature", "browsing leaves"), with no reusable assets. The theme keeps that caption voice in its copy. Clashing palette, Bangers/Comic Neue, wobble hover and bounce easing, no camera shake or flashing fx.
-- [ ] Theme tests: every theme passes WCAG AA text-on-card contrast; a dummy fifth theme needs zero engine changes; switching 20 times leaks no GPU resources (spec: theme-engine.md)
+- [x] Theme tests: every theme passes WCAG AA text-on-card contrast; a dummy fifth theme needs zero engine changes; switching 20 times leaks no GPU resources (spec: theme-engine.md)
+  - Added `src/themes/theme-quality.test.ts`. It caught Professional's accent failing AA with white text (3.68:1), so the accent is now `#2563eb`.
 
 ### Phase 7: Hardening and acceptance
 
