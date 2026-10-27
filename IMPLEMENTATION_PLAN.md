@@ -23,7 +23,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 ### Phase 2: Manifest data layer (spec: site-manifest.md)
 
 - [x] Zod schema + `Site` type for the manifest entry (`id name url repo description category tags[] language isPrivateRepo lastPushed thumb? hidden? accent?` plus `status`, `thumbMode`, `shotWaitFor`, `shotClick`); loader that throws a readable error on a malformed manifest; unit tests (spec: site-manifest.md)
-- [ ] Pure merge function: deep-merge overrides over generated (override wins, overrides may add repo-less sites); stable key ordering; unit tests for precedence (spec: site-manifest.md)
+- [x] Pure merge function: deep-merge overrides over generated (override wins, overrides may add repo-less sites); stable key ordering; unit tests for precedence (spec: site-manifest.md)
 - [ ] Pure URL extraction (`*.netlify.app`, `*.azurewebsites.net`, `*.pages.dev`, `*.github.io`, `*.vercel.app`) from README/CLAUDE.md/netlify.toml/`.netlify/state.json`, plus category heuristic (Games, Learning, Wellbeing, Local (Chelmsford), Tools, 3D & Visual, Parliament); unit tests (spec: site-manifest.md)
 - [ ] `scripts/scan` part 1: `gh repo list` + local `C:\code\*` folder discovery; exclusion list for non-websites; writes `data/sites.generated.json` idempotently (spec: site-manifest.md)
 - [ ] `scripts/scan` part 2: Netlify site-id to URL resolution (token from env, never committed), HTTP HEAD/GET verification flagging `status: "dead"`, console report (new sites, dead URLs, repos without URL) (spec: site-manifest.md)
