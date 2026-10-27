@@ -74,6 +74,20 @@
   border-radius: 8px;
 }
 
+.detail-panel a {
+  color: var(--theme-text, #fff);
+  text-decoration: underline;
+}
+
+.detail-panel a.launch {
+  display: inline-block;
+  padding: 0.5rem 1rem;
+  margin-right: 0.75rem;
+  color: var(--theme-accent-text, #fff);
+  background: var(--theme-accent, #2563eb);
+  border-radius: 6px;
+}
+
 .visually-hidden {
   position: absolute;
   width: 1px;

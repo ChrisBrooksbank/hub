@@ -80,7 +80,8 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [x] Playwright screenshot baselines: overview in each of the five themes, plus one Professional detail view (spec: theme-engine.md, scene-gallery.md)
   - Added `e2e/screenshots.spec.ts` (chromium desktop, reduced motion for determinism). Baselines are `-win32` and the spec skips on CI since the Linux runner has none. Observed in the detail baseline: the panel overflows the viewport top and overlaps the filter chips, and the Launch/repo links touch with no gap. Worth a follow-up fix, then regenerate with `--update-snapshots`.
 - [x] e2e: click every card in the real manifest opens the correct URL; keyboard-only flow reaches the Launch link; no console errors (spec: scene-gallery.md, accessibility-performance.md)
-- [ ] e2e axe sweep in every theme and on the detail panel (zero serious/critical) (spec: accessibility-performance.md)
+- [x] e2e axe sweep in every theme and on the detail panel (zero serious/critical) (spec: accessibility-performance.md)
+  - Added `e2e/a11y-themes.spec.ts`. It found real contrast failures on the detail panel links (Professional, Retro Arcade), fixed in `scene.css` (Launch is now an accent button, repo link uses theme text). Also fixed the Launch/repo spacing. Detail baseline regenerated.
 - [ ] Performance: verify initial JS <= 500 KB gzip, load < 3s on throttled network, Lighthouse accessibility >= 95; fix regressions (spec: accessibility-performance.md)
 - [ ] Final CI check from a fresh clone: `npm ci && npm run check && npm run build` (spec: project-foundation.md)
 
