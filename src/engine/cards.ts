@@ -30,6 +30,7 @@ const FALLBACK_ACCENT = '#888888'
 const HOVER_SCALE = 0.08
 const HOVER_TILT = 0.2
 const HOVER_GLOW = 0.35
+const PROBE_DIRECTIONS = 8
 const WHITE = new Color(0xffffff)
 
 export type TextureLoadFn = (url: string) => Promise<Texture>
@@ -308,6 +309,33 @@ export class CardField {
     const [hit] = this.raycaster.intersectObjects(this.faces, false)
     if (!hit) return undefined
     return [...this.cards.values()].find((card) => card.face === hit.object)
+  }
+
+  /**
+   * Like `pick`, but forgiving: when nothing is under the point, probes concentric rings of
+   * points up to `radiusX`/`radiusY` (NDC) away, so a fingertip counts as a 44px target.
+   */
+  pickNear(
+    ndcX: number,
+    ndcY: number,
+    camera: Camera,
+    radiusX: number,
+    radiusY: number,
+  ): Card | undefined {
+    const direct = this.pick(ndcX, ndcY, camera)
+    if (direct) return direct
+    for (const scale of [0.5, 1]) {
+      for (let i = 0; i < PROBE_DIRECTIONS; i++) {
+        const angle = (i / PROBE_DIRECTIONS) * Math.PI * 2
+        const card = this.pick(
+          ndcX + Math.cos(angle) * radiusX * scale,
+          ndcY + Math.sin(angle) * radiusY * scale,
+          camera,
+        )
+        if (card) return card
+      }
+    }
+    return undefined
   }
 
   dispose(): void {

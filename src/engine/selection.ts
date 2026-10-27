@@ -7,6 +7,7 @@ const HASH_PREFIX = '#/site/'
 const FLY_SECONDS = 0.9
 const HOVER_RATE = 10
 const CLICK_SLOP_PX = 6
+const TOUCH_TARGET_PX = 44
 
 /** `#/site/<id>` -> id; anything else -> undefined. */
 export function parseSiteHash(hash: string): string | undefined {
@@ -160,6 +161,7 @@ export class SelectionController {
   private hovered: Card | undefined
   private selectedId: string | undefined
   private downAt: { x: number; y: number } | undefined
+  private touchDown = false
 
   constructor(options: SelectionOptions) {
     this.field = options.field
@@ -180,6 +182,7 @@ export class SelectionController {
     this.listen(this.element, 'pointerdown', (event) => {
       const e = event as PointerEvent
       this.downAt = { x: e.clientX, y: e.clientY }
+      this.touchDown = e.pointerType === 'touch'
     })
     this.listen(this.element, 'pointermove', (event) => {
       const e = event as PointerEvent
@@ -191,7 +194,8 @@ export class SelectionController {
       const down = this.downAt
       this.downAt = undefined
       if (down && Math.hypot(e.clientX - down.x, e.clientY - down.y) > CLICK_SLOP_PX) return
-      const card = this.cardAt(e.clientX, e.clientY)
+      const card = this.cardAt(e.clientX, e.clientY, this.touchDown ? TOUCH_TARGET_PX / 2 : 0)
+      this.touchDown = false
       if (card) this.select(card.site.id)
     })
     this.listen(this.element, 'keydown', (event) => {
@@ -273,12 +277,20 @@ export class SelectionController {
     this.tooltip.remove()
   }
 
-  private cardAt(clientX: number, clientY: number): Card | undefined {
+  /** `slopPx` widens the hit area so touch taps get a 44px-equivalent target. */
+  private cardAt(clientX: number, clientY: number, slopPx = 0): Card | undefined {
     const rect = this.element.getBoundingClientRect()
     if (rect.width === 0 || rect.height === 0) return undefined
     const x = ((clientX - rect.left) / rect.width) * 2 - 1
     const y = -(((clientY - rect.top) / rect.height) * 2 - 1)
-    return this.field.pick(x, y, this.camera)
+    if (slopPx <= 0) return this.field.pick(x, y, this.camera)
+    return this.field.pickNear(
+      x,
+      y,
+      this.camera,
+      (slopPx / rect.width) * 2,
+      (slopPx / rect.height) * 2,
+    )
   }
 
   private setHovered(card: Card | undefined): void {

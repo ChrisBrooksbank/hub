@@ -145,6 +145,20 @@ describe('SelectionController', () => {
     expect(onChange).not.toHaveBeenCalled()
   })
 
+  it('pickNear forgives near-misses that pick rejects', () => {
+    const { field, camera } = setup()
+    camera.updateMatrixWorld(true)
+    field.group.updateMatrixWorld(true)
+    const card = field.cards.get('a')!
+    const ndc = card.group.getWorldPosition(new Vector3()).project(camera)
+    expect(field.pick(ndc.x, ndc.y, camera)).toBe(card)
+    // Far enough off-card that a direct pick misses.
+    const offX = ndc.x + 3
+    expect(field.pick(offX, ndc.y, camera)).toBeUndefined()
+    expect(field.pickNear(offX, ndc.y, camera, 0.1, 0.1)).toBeUndefined()
+    expect(field.pickNear(offX, ndc.y, camera, 3.5, 3.5)).toBeDefined()
+  })
+
   it('stops listening after dispose', () => {
     const { selection } = setup()
     selection.dispose()
