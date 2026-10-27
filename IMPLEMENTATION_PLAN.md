@@ -46,7 +46,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [x] Card meshes: rounded plane, thumbnail texture via lazy shared cache, name label, category accent, dead-site dimming; use instanced/batched approach for raycasting at 60 cards (spec: scene-gallery.md)
 - [x] Controls: idle auto-rotation, drag/swipe, wheel/pinch along the axis, inertia damping (spec: scene-gallery.md)
 - [x] Selection: hover tilt/glow + tooltip, click/Enter select, camera easing to card, Escape/Back returns to overview, deep link `#/site/<id>` (spec: scene-gallery.md)
-- [ ] DOM detail panel: name, description, category, tags, language, last updated, thumbnail, Launch (`rel="noopener"`, new tab), repo link if public; focus trap and restore on close (spec: scene-gallery.md, accessibility-performance.md)
+- [x] DOM detail panel: name, description, category, tags, language, last updated, thumbnail, Launch (`rel="noopener"`, new tab), repo link if public; focus trap and restore on close (spec: scene-gallery.md, accessibility-performance.md)
 - [ ] Filter chips and search dim non-matching cards (animated) and sync the accessible list; hidden-but-present site list in DOM when scene is shown (spec: scene-gallery.md, accessibility-performance.md)
 - [ ] Professional theme config + live theme application (colours, fog, lights, fonts, copy) with a ~600ms cross-fade (instant under reduced motion); no `theme.id` branching in the engine (spec: theme-engine.md)
 - [ ] Keyboard nav: Tab to chips/search/switcher/cards, arrow keys move selection around the ring; canvas accessible name/description (spec: accessibility-performance.md)
