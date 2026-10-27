@@ -1,4 +1,5 @@
 import type { Site } from '../data/schema'
+import { artDataUrl } from '../engine/procedural-art'
 import { categoriesOf } from './filter'
 import type { Store } from './store'
 
@@ -24,8 +25,23 @@ function renderSite(site: Site): HTMLLIElement {
   const link = el('a', { href: site.url, textContent: site.name, rel: 'noopener' })
   const title = el('h3', {}, [link])
   const item = el('li', { className: 'site' }, [title])
-  if (site.thumb) {
-    item.prepend(el('img', { src: site.thumb, alt: `Screenshot of ${site.name}`, loading: 'lazy' }))
+  const generated = site.thumbMode === 'generated' || !site.thumb
+  const src = generated ? artDataUrl(site.id, site.accent) : site.thumb
+  if (src) {
+    const alt = generated ? `Generated artwork for ${site.name}` : `Screenshot of ${site.name}`
+    const img = el('img', { src, alt, loading: 'lazy' })
+    if (!generated) {
+      img.addEventListener(
+        'error',
+        () => {
+          const art = artDataUrl(site.id, site.accent)
+          if (art) Object.assign(img, { src: art, alt: `Generated artwork for ${site.name}` })
+          else img.remove()
+        },
+        { once: true },
+      )
+    }
+    item.prepend(img)
   }
   if (site.description) item.append(el('p', { textContent: site.description }))
   if (site.status === 'dead')

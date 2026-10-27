@@ -60,7 +60,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 
 ### Phase 5: Thumbnails (spec: thumbnails.md)
 
-- [ ] Deterministic procedural art generator from site id / `accent`, unit-tested for determinism; used as a fallback texture in the scene and list view (spec: thumbnails.md)
+- [x] Deterministic procedural art generator from site id / `accent`, unit-tested for determinism; used as a fallback texture in the scene and list view (spec: thumbnails.md)
 - [ ] `scripts/shots`: Playwright capture 1280x800, network idle + settle, sharp to 640x400 webp q~80 into `public/thumbs/<id>.webp`; `--only`, `--force`, skip when newer than `lastPushed`; `thumbMode`, `shotWaitFor`, `shotClick`; failures reported, never fatal; test with mocked browser that `generated` never visits the URL (spec: thumbnails.md)
 - [ ] Run shots against the real manifest; check `public/thumbs` is under ~5 MB; cards fall back gracefully on thumbnail 404 (spec: thumbnails.md)
 

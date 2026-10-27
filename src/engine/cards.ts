@@ -17,6 +17,7 @@ import {
 } from 'three'
 import type { Site } from '../data/schema'
 import type { CardPlacement } from './layout/types'
+import { createArtCanvas } from './procedural-art'
 
 export const CARD_WIDTH = 3
 export const CARD_HEIGHT = 1.9
@@ -206,6 +207,7 @@ export function createCard(
   applyOpacity()
 
   let disposed = false
+  let generatedTexture: CanvasTexture | undefined
   const card: Card = {
     site,
     group,
@@ -252,12 +254,25 @@ export function createCard(
       accentMaterial.dispose()
       labelMaterial.dispose()
       labelTexture?.dispose()
+      generatedTexture?.dispose()
     },
   }
 
-  if (cache && site.thumb) {
+  const applyGeneratedArt = (): void => {
+    if (disposed || faceMaterial.map) return
+    const canvas = createArtCanvas(site.id, site.accent)
+    if (!canvas) return
+    generatedTexture = new CanvasTexture(canvas)
+    generatedTexture.colorSpace = SRGBColorSpace
+    card.setThumbnail(generatedTexture)
+  }
+
+  if (site.thumbMode === 'generated' || !site.thumb) {
+    applyGeneratedArt()
+  } else if (cache) {
     void cache.get(site.thumb).then((texture) => {
       if (texture) card.setThumbnail(texture)
+      else applyGeneratedArt()
     })
   }
   return card
