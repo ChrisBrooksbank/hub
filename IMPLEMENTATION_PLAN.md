@@ -28,7 +28,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [x] `scripts/scan` part 1: `gh repo list` + local `C:\code\*` folder discovery; exclusion list for non-websites; writes `data/sites.generated.json` idempotently (spec: site-manifest.md)
 - [x] `scripts/scan` part 2: Netlify site-id to URL resolution (token from env, never committed), HTTP HEAD/GET verification flagging `status: "dead"`, console report (new sites, dead URLs, repos without URL) (spec: site-manifest.md)
 - [x] Run the scan for real; confirm >= 25 live entries; check that every private-repo site is `hidden: true` and every public-repo site is not (the hiding rule is private-repos-only, with no hand-picked list) (spec: site-manifest.md)
-- [ ] Vite plugin that merges generated + overrides at build time and strips `hidden` entries before bundling; add a build test that greps `dist/` for a hidden site's id/url and fails if found (spec: site-manifest.md)
+- [x] Vite plugin that merges generated + overrides at build time and strips `hidden` entries before bundling; add a build test that greps `dist/` for a hidden site's id/url and fails if found (spec: site-manifest.md)
 
 ### Phase 3: Accessible list view and Basic theme (build the list once; spec: accessibility-performance.md, theme-engine.md)
 
