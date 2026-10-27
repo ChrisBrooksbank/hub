@@ -66,7 +66,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 
 ### Phase 6: Remaining themes (spec: theme-engine.md)
 
-- [ ] Optional postFx pipeline (bloom, scanlines, vignette, grain), code-split and disabled on the low-power path; ambient particle FX (spec: theme-engine.md, accessibility-performance.md)
+- [x] Optional postFx pipeline (bloom, scanlines, vignette, grain), code-split and disabled on the low-power path; ambient particle FX (spec: theme-engine.md, accessibility-performance.md)
 - [ ] Retro Arcade theme (Press Start 2P, grid floor, neon, CRT scanlines with no flicker above 3Hz, "INSERT COIN TO LAUNCH" copy) (spec: theme-engine.md)
 - [ ] Calm / Zen theme (pastel gradient, ~4s in / 6s out drift disabled under reduced motion, soft particles, gentle copy) (spec: theme-engine.md)
 - [ ] Moose Mode theme: first read `C:\code\moose` (README, docs, index.html) for personality, assets and jokes; reuse what fits (spec: theme-engine.md)

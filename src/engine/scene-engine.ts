@@ -3,6 +3,7 @@ import {
   Fog,
   Material,
   Mesh,
+  Points,
   PerspectiveCamera,
   Scene,
   Texture,
@@ -39,7 +40,7 @@ function disposeMaterial(material: Material): void {
 /** Disposes geometries, materials and their textures for everything under `root`. */
 export function disposeObject(root: Object3D): void {
   root.traverse((object) => {
-    if (!(object instanceof Mesh)) return
+    if (!(object instanceof Mesh) && !(object instanceof Points)) return
     object.geometry.dispose()
     const materials: Material | Material[] = object.material
     if (Array.isArray(materials)) materials.forEach(disposeMaterial)
@@ -56,6 +57,8 @@ export class SceneEngine {
   private readonly frameCallbacks = new Set<FrameCallback>()
   private readonly resizeObserver: ResizeObserver | undefined
   private pixelRatio: number
+  private renderOverride: ((deltaSeconds: number) => void) | undefined
+  private resizeCallback: ((width: number, height: number, pixelRatio: number) => void) | undefined
   private lastTime: number | undefined
   private elapsed = 0
   private running = false
@@ -101,12 +104,32 @@ export class SceneEngine {
     this.resize()
   }
 
+  get currentPixelRatio(): number {
+    return this.pixelRatio
+  }
+
+  /** The underlying renderer, for effects that wrap it (e.g. post-processing). */
+  get gl(): EngineRenderer {
+    return this.renderer
+  }
+
+  /** Replaces the default render call (null restores it). */
+  setRenderOverride(render: ((deltaSeconds: number) => void) | null): void {
+    this.renderOverride = render ?? undefined
+  }
+
+  /** Called after every resize with the new size. */
+  onResize(callback: ((width: number, height: number, pixelRatio: number) => void) | null): void {
+    this.resizeCallback = callback ?? undefined
+  }
+
   resize(): void {
     const width = Math.max(1, this.container.clientWidth)
     const height = Math.max(1, this.container.clientHeight)
     this.camera.aspect = width / height
     this.camera.updateProjectionMatrix()
     this.renderer.setSize(width, height, false)
+    this.resizeCallback?.(width, height, this.pixelRatio)
   }
 
   start(): void {
@@ -128,7 +151,8 @@ export class SceneEngine {
     this.lastTime = timeMs
     this.elapsed += delta
     for (const callback of this.frameCallbacks) callback(delta, this.elapsed)
-    this.renderer.render(this.scene, this.camera)
+    if (this.renderOverride) this.renderOverride(delta)
+    else this.renderer.render(this.scene, this.camera)
   }
 
   /** Stops the loop and releases every GPU resource. Safe to call twice. */
@@ -138,6 +162,8 @@ export class SceneEngine {
     this.disposed = true
     this.resizeObserver?.disconnect()
     this.frameCallbacks.clear()
+    this.renderOverride = undefined
+    this.resizeCallback = undefined
     disposeObject(this.scene)
     this.scene.clear()
     if (this.scene.background instanceof Texture) this.scene.background.dispose()

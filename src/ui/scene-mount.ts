@@ -1,7 +1,10 @@
 import './scene.css'
+import type { WebGLRenderer } from 'three'
 import type { Site } from '../data/schema'
 import { CardField } from '../engine/cards'
 import { attachPointerControls, GalleryControls } from '../engine/controls'
+import { createParticles, type ParticleField } from '../engine/particles'
+import { hasPostFx } from '../engine/postfx-config'
 import { KeyboardNav } from '../engine/keyboard'
 import {
   FrameMonitor,
@@ -101,12 +104,53 @@ export function mountScene(options: SceneMountOptions): () => void {
   engine.scene.add(field.group)
 
   const canvasEl = engine.domElement
+  let particles: ParticleField | undefined
+  const rebuildParticles = (): void => {
+    particles?.dispose()
+    particles = createParticles(theme, quality.particleScale, reducedMotion)
+    particles?.addTo(engine.scene)
+  }
+
+  interface PostFxHandle {
+    render(delta: number): void
+    setSize(width: number, height: number, pixelRatio: number): void
+    dispose(): void
+  }
+  let postFx: PostFxHandle | undefined
+  let unmounted = false
+  const disablePostFx = (): void => {
+    engine.setRenderOverride(null)
+    engine.onResize(null)
+    postFx?.dispose()
+    postFx = undefined
+  }
+  const enablePostFx = (): void => {
+    if (!hasPostFx(theme.postFx)) return
+    void import('../engine/postfx').then(({ PostFx }) => {
+      if (unmounted || !quality.postFx) return
+      const fx = new PostFx(
+        engine.gl as WebGLRenderer,
+        engine.scene,
+        engine.camera,
+        theme.postFx,
+        reducedMotion,
+      )
+      postFx = fx
+      fx.setSize(root.clientWidth || 1, root.clientHeight || 1, engine.currentPixelRatio)
+      engine.onResize((w, h, r) => fx.setSize(w, h, r))
+      engine.setRenderOverride((delta) => fx.render(delta))
+    })
+  }
+
   const setQuality = (tier: 'high' | 'low'): void => {
     quality = QUALITY[tier]
     engine.setPixelRatio(Math.min(quality.pixelRatio, globalThis.devicePixelRatio ?? 1))
     canvasEl.dataset.quality = tier
+    if (!quality.postFx) disablePostFx()
+    rebuildParticles()
   }
   setQuality(quality === QUALITY.low ? 'low' : 'high')
+  if (quality.postFx) enablePostFx()
   const monitor = new FrameMonitor(() => setQuality('low'))
 
   const controls = new GalleryControls({ reducedMotion, autoRotateSpeed: theme.motion.idleSpeed })
@@ -142,13 +186,16 @@ export function mountScene(options: SceneMountOptions): () => void {
     canvas.dataset.rotation = controls.angle.toFixed(4)
     selection.update(delta)
     field.update(delta)
+    particles?.update(delta)
     applier.update(delta)
   })
   engine.start()
   selection.syncFromHash()
 
   return () => {
+    unmounted = true
     engine.stop()
+    disablePostFx()
     unbindFilter()
     list.dispose()
     keyboard.dispose()
