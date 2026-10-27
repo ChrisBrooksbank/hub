@@ -15,7 +15,8 @@
     "format:check": "prettier --check .",
     "typecheck": "tsc --noEmit",
     "knip": "knip",
-    "check": "run-s typecheck lint format:check test:run"
+    "check": "run-s typecheck lint format:check test:run",
+    "prepare": "husky"
   },
   "dependencies": {
     "three": "^0.186.1",
@@ -27,13 +28,24 @@
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "globals": "^17.13.0",
+    "husky": "^9.1.7",
     "jsdom": "^30.1.3",
     "knip": "^6.43.0",
+    "lint-staged": "^17.6.0",
     "npm-run-all2": "^9.0.4",
     "prettier": "^3.9.10",
     "typescript": "~6.0.3",
     "typescript-eslint": "^8.72.1",
     "vite": "^8.3.5",
     "vitest": "^5.0.5"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{json,md,yml,yaml}": [
+      "prettier --write"
+    ]
   }
 }
