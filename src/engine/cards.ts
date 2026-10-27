@@ -24,6 +24,8 @@ const LABEL_HEIGHT = 0.5
 const ACCENT_HEIGHT = 0.08
 const DEAD_DIM = 0.4
 const FILTERED_DIM = 0.18
+/** Seconds for a card to fade fully between matching and dimmed. */
+const FILTER_FADE_SECONDS = 0.35
 const FALLBACK_ACCENT = '#888888'
 const HOVER_SCALE = 0.08
 const HOVER_TILT = 0.2
@@ -146,8 +148,10 @@ export interface Card {
   readonly group: Group
   /** The only mesh used for picking. */
   readonly face: Mesh<BufferGeometry, MeshBasicMaterial>
-  /** 0..1 visibility from filters; non-matching cards dim. */
-  setMatch(matches: boolean): void
+  /** Non-matching cards dim. Fades over time via `update`, or jumps when `instant` (reduced motion). */
+  setMatch(matches: boolean, instant?: boolean): void
+  /** Advances the filter fade; returns true while still animating. */
+  update(deltaSeconds: number): boolean
   /** 0..1 hover emphasis: tilts toward the pointer (`tiltX`/`tiltY` in -1..1), scales up and glows. */
   setHover(amount: number, tiltX?: number, tiltY?: number): void
   setThumbnail(texture: Texture): void
@@ -163,7 +167,8 @@ export function createCard(
   const accent = new Color(site.accent ?? FALLBACK_ACCENT)
   const dead = site.status === 'dead'
   const baseOpacity = dead ? DEAD_DIM : 1
-  let matches = true
+  let matchAmount = 1
+  let matchTarget = 1
 
   const faceMaterial = new MeshBasicMaterial({ color: accent, transparent: true })
   const accentMaterial = new MeshBasicMaterial({ color: accent, transparent: true })
@@ -192,7 +197,7 @@ export function createCard(
   const baseRotation = { x: placement.rotationX, y: placement.rotationY }
 
   const applyOpacity = (): void => {
-    const opacity = baseOpacity * (matches ? 1 : FILTERED_DIM)
+    const opacity = baseOpacity * (FILTERED_DIM + (1 - FILTERED_DIM) * matchAmount)
     faceMaterial.opacity = opacity
     accentMaterial.opacity = opacity
     labelMaterial.opacity = opacity
@@ -204,9 +209,22 @@ export function createCard(
     site,
     group,
     face,
-    setMatch(next) {
-      matches = next
+    setMatch(next, instant = false) {
+      matchTarget = next ? 1 : 0
+      if (instant) {
+        matchAmount = matchTarget
+        applyOpacity()
+      }
+    },
+    update(deltaSeconds) {
+      if (matchAmount === matchTarget) return false
+      const step = Math.max(0, deltaSeconds) / FILTER_FADE_SECONDS
+      matchAmount =
+        matchAmount < matchTarget
+          ? Math.min(matchTarget, matchAmount + step)
+          : Math.max(matchTarget, matchAmount - step)
       applyOpacity()
+      return matchAmount !== matchTarget
     },
     setHover(amount, tiltX = 0, tiltY = 0) {
       const h = Math.min(1, Math.max(0, amount))
@@ -272,9 +290,14 @@ export class CardField {
     this.faces = [...this.cards.values()].map((card) => card.face)
   }
 
-  /** Dims every card whose id is not in `matching`. */
-  applyFilter(matching: ReadonlySet<string>): void {
-    for (const [id, card] of this.cards) card.setMatch(matching.has(id))
+  /** Dims every card whose id is not in `matching`; the fade runs in `update` unless `instant`. */
+  applyFilter(matching: ReadonlySet<string>, instant = false): void {
+    for (const [id, card] of this.cards) card.setMatch(matching.has(id), instant)
+  }
+
+  /** Per-frame hook for card animations. */
+  update(deltaSeconds: number): void {
+    for (const card of this.cards.values()) card.update(deltaSeconds)
   }
 
   /** Finds the nearest card under a pointer given in normalised device coordinates. */

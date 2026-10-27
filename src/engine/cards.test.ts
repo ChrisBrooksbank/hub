@@ -105,11 +105,30 @@ describe('CardField', () => {
     const opacity = (id: string) => field.cards.get(id)!.face.material.opacity
     expect(opacity('a')).toBe(1)
     expect(opacity('b')).toBeLessThan(0.5)
-    field.applyFilter(new Set(['b']))
+    field.applyFilter(new Set(['b']), true)
     expect(opacity('a')).toBeLessThan(0.5)
     expect(opacity('b')).toBeLessThan(0.5)
-    field.applyFilter(new Set(['a', 'b']))
+    field.applyFilter(new Set(['a', 'b']), true)
     expect(opacity('a')).toBe(1)
+    field.dispose()
+  })
+
+  it('animates the filter dim over several frames', () => {
+    const field = build([site('a'), site('b')])
+    const opacity = (id: string) => field.cards.get(id)!.face.material.opacity
+    field.applyFilter(new Set(['b']))
+    expect(opacity('a')).toBe(1)
+    field.update(0.1)
+    const mid = opacity('a')
+    expect(mid).toBeLessThan(1)
+    expect(mid).toBeGreaterThan(0.18)
+    expect(opacity('b')).toBe(1)
+    field.update(1)
+    expect(opacity('a')).toBeCloseTo(0.18)
+    field.applyFilter(new Set(['a', 'b']))
+    field.update(1)
+    expect(opacity('a')).toBe(1)
+    expect(field.cards.get('a')!.update(1)).toBe(false)
     field.dispose()
   })
 
