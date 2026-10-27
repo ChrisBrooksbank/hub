@@ -48,7 +48,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [x] Selection: hover tilt/glow + tooltip, click/Enter select, camera easing to card, Escape/Back returns to overview, deep link `#/site/<id>` (spec: scene-gallery.md)
 - [x] DOM detail panel: name, description, category, tags, language, last updated, thumbnail, Launch (`rel="noopener"`, new tab), repo link if public; focus trap and restore on close (spec: scene-gallery.md, accessibility-performance.md)
 - [x] Filter chips and search dim non-matching cards (animated) and sync the accessible list; hidden-but-present site list in DOM when scene is shown (spec: scene-gallery.md, accessibility-performance.md)
-- [ ] Professional theme config + live theme application (colours, fog, lights, fonts, copy) with a ~600ms cross-fade (instant under reduced motion); no `theme.id` branching in the engine (spec: theme-engine.md)
+- [x] Professional theme config + live theme application (colours, fog, lights, fonts, copy) with a ~600ms cross-fade (instant under reduced motion); no `theme.id` branching in the engine (spec: theme-engine.md)
 - [ ] Keyboard nav: Tab to chips/search/switcher/cards, arrow keys move selection around the ring; canvas accessible name/description (spec: accessibility-performance.md)
 - [ ] Reduced motion: stop auto-rotation, instant cuts or short fades, no shake or parallax; e2e test that rotation angle does not change over 3s (spec: accessibility-performance.md)
 - [ ] Touch: 44px hit targets, pinch zoom, tap to select (spec: accessibility-performance.md)
