@@ -47,6 +47,19 @@ describe('theme registry', () => {
     expect(retro.copy.launchLabel).toBe('INSERT COIN TO LAUNCH')
   })
 
+  it('calm zen is a slow, flash-free scene theme with soft particles', () => {
+    const calm = getTheme('calm-zen')
+    expect(calm.id).toBe('calm-zen')
+    expect(calm.presentation).toBe('scene')
+    expect(calm.motion.idleSpeed).toBeGreaterThan(0)
+    expect(calm.motion.idleSpeed).toBeLessThan(getTheme('professional').motion.idleSpeed)
+    expect(calm.motion.cameraShake).toBe(0)
+    expect(calm.postFx.bloom).toBeUndefined()
+    expect(calm.postFx.scanlines).toBeUndefined()
+    expect(calm.postFx.grain).toBeUndefined()
+    expect(calm.ambientFx.particles).toBeDefined()
+  })
+
   it('basic is a no-animation list theme with system fonts', () => {
     const basic = getTheme('basic')
     expect(basic.id).toBe('basic')
