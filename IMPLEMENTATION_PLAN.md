@@ -41,7 +41,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 
 ### Phase 4: Scene engine (spec: scene-gallery.md)
 
-- [ ] `SceneEngine` class: renderer, camera, render loop, resize, full disposal (geometries/materials/textures); unit test disposal via mock renderer (spec: scene-gallery.md)
+- [x] `SceneEngine` class: renderer, camera, render loop, resize, full disposal (geometries/materials/textures); unit test disposal via mock renderer (spec: scene-gallery.md)
 - [ ] Layout strategy interface with `ring` implementation (categories as vertical bands/arcs), then `helix` and `sphere`; pure layout math unit-tested (spec: scene-gallery.md)
 - [ ] Card meshes: rounded plane, thumbnail texture via lazy shared cache, name label, category accent, dead-site dimming; use instanced/batched approach for raycasting at 60 cards (spec: scene-gallery.md)
 - [ ] Controls: idle auto-rotation, drag/swipe, wheel/pinch along the axis, inertia damping (spec: scene-gallery.md)
