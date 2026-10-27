@@ -56,7 +56,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
   - Unblocked (iteration 30): scene mount exists and the canvas exposes `data-rotation`; only the e2e rotation test remains.
 - [x] Touch: 44px hit targets, pinch zoom, tap to select (spec: accessibility-performance.md)
   - Pinch/drag already in `controls.ts`; added `CardField.pickNear` and touch taps in `SelectionController` use a 44px-equivalent hit area; UI buttons/inputs already `min-height/width: 44px`.
-- [ ] Adaptive quality: detect low-power devices (mobile, low `hardwareConcurrency`, slow first frames); lower pixel ratio, drop postFx, cut particles (spec: accessibility-performance.md)
+- [x] Adaptive quality: detect low-power devices (mobile, low `hardwareConcurrency`, slow first frames); lower pixel ratio, drop postFx, cut particles (spec: accessibility-performance.md)
 
 ### Phase 5: Thumbnails (spec: thumbnails.md)
 

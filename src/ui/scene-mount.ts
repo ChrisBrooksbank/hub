@@ -3,6 +3,13 @@ import type { Site } from '../data/schema'
 import { CardField } from '../engine/cards'
 import { attachPointerControls, GalleryControls } from '../engine/controls'
 import { KeyboardNav } from '../engine/keyboard'
+import {
+  FrameMonitor,
+  initialTier,
+  QUALITY,
+  readDevice,
+  type QualitySettings,
+} from '../engine/quality'
 import { LAYOUTS } from '../engine/layout/strategies'
 import { SceneEngine } from '../engine/scene-engine'
 import { SelectionController } from '../engine/selection'
@@ -82,7 +89,8 @@ export function mountScene(options: SceneMountOptions): () => void {
     ...(theme.layout.strategy === 'ring' ? { bandHeight: theme.layout.bandHeight } : {}),
   }).place(sites)
 
-  const engine = new SceneEngine({ container: root })
+  let quality: QualitySettings = QUALITY[initialTier(readDevice())]
+  const engine = new SceneEngine({ container: root, pixelRatio: quality.pixelRatio })
   const applier = new ThemeApplier({ scene: engine.scene, cssTarget: root, reducedMotion })
   applier.apply(theme)
 
@@ -91,6 +99,15 @@ export function mountScene(options: SceneMountOptions): () => void {
 
   const field = new CardField(sites, layout.placements)
   engine.scene.add(field.group)
+
+  const canvasEl = engine.domElement
+  const setQuality = (tier: 'high' | 'low'): void => {
+    quality = QUALITY[tier]
+    engine.setPixelRatio(Math.min(quality.pixelRatio, globalThis.devicePixelRatio ?? 1))
+    canvasEl.dataset.quality = tier
+  }
+  setQuality(quality === QUALITY.low ? 'low' : 'high')
+  const monitor = new FrameMonitor(() => setQuality('low'))
 
   const controls = new GalleryControls({ reducedMotion, autoRotateSpeed: theme.motion.idleSpeed })
   const canvas = engine.domElement
@@ -118,6 +135,7 @@ export function mountScene(options: SceneMountOptions): () => void {
   const unbindFilter = bindSceneFilter(store, field, () => reducedMotion)
 
   engine.onFrame((delta) => {
+    if (!monitor.finished && quality !== QUALITY.low) monitor.update(delta)
     controls.update(delta)
     field.group.rotation.y = controls.angle
     field.group.position.y = controls.axis
