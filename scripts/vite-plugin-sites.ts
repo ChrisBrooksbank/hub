@@ -47,7 +47,7 @@ export function sitesPlugin(options: SitesPluginOptions): Plugin {
     load(id) {
       if (id !== RESOLVED_ID) return undefined
       this.addWatchFile(generatedPath)
-      this.addWatchFile(overridesPath)
+      if (existsSync(overridesPath)) this.addWatchFile(overridesPath)
       return `export const sites = ${JSON.stringify(load().visible)}\n`
     },
     closeBundle() {
