@@ -17,7 +17,8 @@
     "knip": "knip",
     "check": "run-s typecheck lint format:check test:run",
     "prepare": "husky",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "sites:scan": "node scripts/scan.ts"
   },
   "dependencies": {
     "three": "^0.186.1",
