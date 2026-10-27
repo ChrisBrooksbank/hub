@@ -27,7 +27,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 - [ ] Pure URL extraction (`*.netlify.app`, `*.azurewebsites.net`, `*.pages.dev`, `*.github.io`, `*.vercel.app`) from README/CLAUDE.md/netlify.toml/`.netlify/state.json`, plus category heuristic (Games, Learning, Wellbeing, Local (Chelmsford), Tools, 3D & Visual, Parliament); unit tests (spec: site-manifest.md)
 - [ ] `scripts/scan` part 1: `gh repo list` + local `C:\code\*` folder discovery; exclusion list for non-websites; writes `data/sites.generated.json` idempotently (spec: site-manifest.md)
 - [ ] `scripts/scan` part 2: Netlify site-id to URL resolution (token from env, never committed), HTTP HEAD/GET verification flagging `status: "dead"`, console report (new sites, dead URLs, repos without URL) (spec: site-manifest.md)
-- [ ] Run the scan for real; confirm >= 25 live entries; seed `data/sites.overrides.json` with `hidden: true` for the likely-sensitive set (selfhypnosis, shadow-work, faceit, witness, voicecoach) as a provisional default, and flag in Notes for the owner to confirm (spec: site-manifest.md)
+- [ ] Run the scan for real; confirm >= 25 live entries; check that every private-repo site is `hidden: true` and every public-repo site is not (the hiding rule is private-repos-only, with no hand-picked list) (spec: site-manifest.md)
 - [ ] Vite plugin that merges generated + overrides at build time and strips `hidden` entries before bundling; add a build test that greps `dist/` for a hidden site's id/url and fails if found (spec: site-manifest.md)
 
 ### Phase 3: Accessible list view and Basic theme (build the list once; spec: accessibility-performance.md, theme-engine.md)
@@ -58,7 +58,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 
 - [ ] Deterministic procedural art generator from site id / `accent`, unit-tested for determinism; used as a fallback texture in the scene and list view (spec: thumbnails.md)
 - [ ] `scripts/shots`: Playwright capture 1280x800, network idle + settle, sharp to 640x400 webp q~80 into `public/thumbs/<id>.webp`; `--only`, `--force`, skip when newer than `lastPushed`; `thumbMode`, `shotWaitFor`, `shotClick`; failures reported, never fatal; test with mocked browser that `generated` never visits the URL (spec: thumbnails.md)
-- [ ] Run shots against the real manifest; check `public/thumbs` is under ~5 MB; make sure hidden/sensitive sites use `thumbMode: "generated"`; cards fall back gracefully on thumbnail 404 (spec: thumbnails.md)
+- [ ] Run shots against the real manifest; check `public/thumbs` is under ~5 MB; cards fall back gracefully on thumbnail 404 (spec: thumbnails.md)
 
 ### Phase 6: Remaining themes (spec: theme-engine.md)
 
@@ -90,7 +90,7 @@ Priority order. Each task = one build iteration. Dependencies come first.
 
 ## Notes
 
-- Manual owner steps (not for the loop): create the Netlify site and link the repo; supply a Netlify token via env for the scan; confirm which sites are `hidden`.
+- Manual owner steps (not for the loop): create the Netlify site and link the repo; supply a Netlify token via env for the scan.
 - Architecture: `Theme` is pure data; `SceneEngine` consumes a theme and a layout strategy and never inspects `theme.id`. `presentation: "list"` routes to the list view, which is the same component for Basic, the List toggle and the no-WebGL fallback.
 - three.js must only be reached via dynamic `import()` from the scene path so the Basic theme's initial bundle has none of it.
 - Hidden sites are stripped by a Vite build step, not UI filtering. The same step should guarantee that thumbs for hidden sites are not emitted into `dist/`.

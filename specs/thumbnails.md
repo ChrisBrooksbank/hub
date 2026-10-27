@@ -7,7 +7,7 @@ A Playwright script captures a screenshot of every live site and commits optimis
 ## User Stories
 
 - As a visitor, I want each card to show what the site looks like so that I can choose by sight.
-- As the owner, I want sensitive sites to show generated art instead of a real screenshot so that nothing personal is exposed.
+- As the owner, I want to be able to give any site generated art instead of a real screenshot, via `thumbMode`.
 
 ## Requirements
 
