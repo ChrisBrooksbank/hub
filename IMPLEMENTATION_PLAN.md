@@ -84,7 +84,8 @@ Priority order. Each task = one build iteration. Dependencies come first.
   - Added `e2e/a11y-themes.spec.ts`. It found real contrast failures on the detail panel links (Professional, Retro Arcade), fixed in `scene.css` (Launch is now an accent button, repo link uses theme text). Also fixed the Launch/repo spacing. Detail baseline regenerated.
 - [x] Performance: verify initial JS <= 500 KB gzip, load < 3s on throttled network, Lighthouse accessibility >= 95; fix regressions (spec: accessibility-performance.md)
   - Done (iteration 45): JS total 160 KB gzip (budget 500) via `npm run perf:budget`; throttled-load e2e in `e2e/perf.spec.ts`. Lighthouse itself was not run (no dependency); accessibility is covered by the axe sweeps instead.
-- [ ] Final CI check from a fresh clone: `npm ci && npm run check && npm run build` (spec: project-foundation.md)
+- [x] Final CI check from a fresh clone: `npm ci && npm run check && npm run build` (spec: project-foundation.md)
+  - Done (iteration 46): found that a Windows clone (`core.autocrlf=true`) checks out CRLF and fails `format:check` on every file. Added `.gitattributes` (`* text=auto eol=lf`); the fresh clone now passes `npm ci`, `check` (193 tests) and `build`.
 
 ## Backlog (post-MVP, do not build)
 
