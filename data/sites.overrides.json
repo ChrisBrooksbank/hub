@@ -25,7 +25,8 @@
   },
   {
     "id": "myround",
-    "category": "Tools"
+    "category": "Tools",
+    "url": "https://myround-app.netlify.app"
   },
   {
     "id": "pockettone",
@@ -45,7 +46,8 @@
     "language": "TypeScript",
     "isPrivateRepo": false,
     "lastPushed": "2026-10-19T20:42:09Z",
-    "status": "live"
+    "status": "live",
+    "url": "https://breadcrumbs-trail.netlify.app"
   },
   {
     "id": "home-monitor",
@@ -82,7 +84,8 @@
     "language": "TypeScript",
     "isPrivateRepo": false,
     "lastPushed": "2026-10-07T04:06:33Z",
-    "status": "live"
+    "status": "live",
+    "url": "https://mazes-3d.netlify.app"
   },
   {
     "id": "selfhypnosis",
@@ -119,7 +122,8 @@
     "language": "TypeScript",
     "isPrivateRepo": false,
     "lastPushed": "2026-10-06T18:50:52Z",
-    "status": "live"
+    "status": "live",
+    "url": "https://letshang42.netlify.app"
   },
   {
     "id": "poleposition",
@@ -281,6 +285,19 @@
     "language": "Rust",
     "isPrivateRepo": false,
     "lastPushed": "2026-10-06T16:25:21Z",
+    "status": "live"
+  },
+  {
+    "id": "ldnout",
+    "name": "ldnout",
+    "url": "https://ldnout-mvp.netlify.app",
+    "repo": "ldnout",
+    "description": "Discover what's on in London. A PWA that aggregates local events from multiple sources into one clean, mobile-first interface.",
+    "category": "Tools",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-06-18T20:25:58Z",
     "status": "live"
   }
 ]
