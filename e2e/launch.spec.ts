@@ -7,10 +7,12 @@ function readJson(path: string): SiteRecord[] {
   return existsSync(path) ? (JSON.parse(readFileSync(path, 'utf8')) as SiteRecord[]) : []
 }
 
-const { visible: sites } = resolveManifest(
+const { visible: allSites } = resolveManifest(
   readJson('data/sites.generated.json'),
   readJson('data/sites.overrides.json'),
 )
+
+const sites = allSites.filter((site) => site.url)
 
 test.describe('launching sites', () => {
   test.use({ reducedMotion: 'reduce' })
@@ -27,8 +29,8 @@ test.describe('launching sites', () => {
       if (message.type() === 'error') errors.push(message.text())
     })
 
-    await page.goto('/?theme=professional')
-    await expect(page.locator('.scene-root canvas')).toHaveAttribute('data-rotation', /.+/)
+    await page.goto('/')
+    await expect(page.locator('canvas.table-canvas')).toHaveAttribute('data-dealt', 'true')
 
     const panel = page.locator('.detail-panel')
     for (const site of sites) {
@@ -51,8 +53,8 @@ test.describe('launching sites', () => {
   test('keyboard alone reaches the Launch link', async ({ page }) => {
     const first = sites[0]
     if (!first) throw new Error('manifest is empty')
-    await page.goto('/?theme=professional')
-    await expect(page.locator('.scene-root canvas')).toHaveAttribute('data-rotation', /.+/)
+    await page.goto('/')
+    await expect(page.locator('canvas.table-canvas')).toHaveAttribute('data-dealt', 'true')
 
     await page.evaluate((id) => {
       window.location.hash = `#/site/${encodeURIComponent(id)}`

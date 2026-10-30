@@ -1,4 +1,5 @@
 import type { Site } from '../data/schema'
+import { repoUrl } from './links'
 import type { Store } from './store'
 
 /** The slice of CardField the filter binding needs. */
@@ -31,9 +32,14 @@ export function createSceneSiteList(
   const items = new Map<string, HTMLLIElement>()
   for (const site of allSites) {
     const link = document.createElement('a')
-    link.href = site.url
+    link.href = site.url ?? (site.repo ? repoUrl(site.repo) : '#')
     link.rel = 'noopener'
-    link.textContent = site.status === 'dead' ? `${site.name} (may be offline)` : site.name
+    link.textContent =
+      site.status === 'dead'
+        ? `${site.name} (may be offline)`
+        : site.url
+          ? site.name
+          : `${site.name} (no live demo, source on GitHub)`
     const item = document.createElement('li')
     item.dataset.category = site.category
     item.append(link)

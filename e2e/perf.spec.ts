@@ -10,7 +10,7 @@ test('loads under 3s on a throttled network', async ({ page, context }) => {
     uploadThroughput: (750 * 1024) / 8,
   })
   const start = Date.now()
-  await page.goto('/?theme=basic')
+  await page.goto('/?view=list')
   await expect(page.locator('#app')).not.toBeEmpty()
   expect(Date.now() - start).toBeLessThan(3000)
 })

@@ -1,0 +1,286 @@
+[
+  {
+    "id": "arcana-veritas",
+    "category": "Wellbeing"
+  },
+  {
+    "id": "bookmarkmanager",
+    "category": "Tools"
+  },
+  {
+    "id": "cookbox",
+    "category": "Tools"
+  },
+  {
+    "id": "life",
+    "category": "3D & Visual"
+  },
+  {
+    "id": "mingolfscore",
+    "category": "Tools"
+  },
+  {
+    "id": "planningpoker",
+    "category": "Tools"
+  },
+  {
+    "id": "myround",
+    "category": "Tools"
+  },
+  {
+    "id": "pockettone",
+    "category": "Wellbeing"
+  },
+  {
+    "id": "world-flags-lab",
+    "category": "Learning"
+  },
+  {
+    "id": "breadcrumbs",
+    "name": "breadcrumbs",
+    "repo": "breadcrumbs",
+    "description": "Map-free GPS breadcrumb PWA for recording and retracing walking routes",
+    "category": "Tools",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-19T20:42:09Z",
+    "status": "live"
+  },
+  {
+    "id": "home-monitor",
+    "name": "home-monitor",
+    "repo": "home-monitor",
+    "description": "A real-time, interactive smart home dashboard for monitoring and controlling a smart home",
+    "category": "Tools",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-19T20:42:05Z",
+    "status": "live"
+  },
+  {
+    "id": "uk-parliament-learn",
+    "name": "uk-parliament-learn",
+    "repo": "uk-parliament-learn",
+    "description": "Interactive educational PWA about the UK Parliament and political systems. Content adapts to four audience levels: child, teenager, adult, and researcher. 36 topics across 8 categories with quizzes, glossaries, key dates, and verified video links.",
+    "category": "Parliament",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-19T20:41:49Z",
+    "status": "live",
+    "url": "https://uk-parliament-learn.netlify.app"
+  },
+  {
+    "id": "mazes",
+    "name": "mazes",
+    "repo": "mazes",
+    "description": "PWA: generate, solve, and walk through mazes in 2D/isometric/3D",
+    "category": "Games",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-07T04:06:33Z",
+    "status": "live"
+  },
+  {
+    "id": "selfhypnosis",
+    "name": "selfhypnosis",
+    "repo": "selfhypnosis",
+    "description": "Evidence-based guide to self-hypnosis — comprehensive research covering neuroscience, core techniques, step-by-step protocols, therapeutic applications, and safety considerations. Grounded in peer-reviewed studies and meta-analyses.",
+    "category": "Wellbeing",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-06T20:39:48Z",
+    "status": "live",
+    "url": "https://selfhypnosis.netlify.app"
+  },
+  {
+    "id": "rule30-renderer",
+    "name": "rule30-renderer",
+    "repo": "rule30-renderer",
+    "description": "Interactive TypeScript canvas renderer for Wolfram's Rule 30 cellular automaton",
+    "category": "3D & Visual",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-06T19:20:30Z",
+    "status": "live"
+  },
+  {
+    "id": "letshang",
+    "name": "letshang",
+    "repo": "letshang",
+    "description": "Community meetup platform — a mobile-first PWA for organizing local groups, events, RSVPs, and real-time notifications. Built with SvelteKit, Supabase, and Tailwind CSS.",
+    "category": "Tools",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-06T18:50:52Z",
+    "status": "live"
+  },
+  {
+    "id": "poleposition",
+    "name": "poleposition",
+    "repo": "poleposition",
+    "description": "Pole Position arcade game research and recreation",
+    "category": "Games",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-05T18:47:29Z",
+    "status": "live",
+    "url": "https://poleposition-fan-project.netlify.app"
+  },
+  {
+    "id": "kaleidoscope",
+    "name": "kaleidoscope",
+    "repo": "kaleidoscope",
+    "description": "Retro kaleidoscope toy with zen modes",
+    "category": "3D & Visual",
+    "tags": [],
+    "language": "HTML",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-05T18:07:11Z",
+    "status": "live",
+    "url": "https://kaleidoscope-toy-brooksbank.netlify.app"
+  },
+  {
+    "id": "second-brain-pwa",
+    "name": "second-brain-pwa",
+    "repo": "second-brain-pwa",
+    "description": "A local-first progressive second brain PWA",
+    "category": "Tools",
+    "tags": [],
+    "language": null,
+    "isPrivateRepo": false,
+    "lastPushed": "2026-06-21T22:36:26Z",
+    "status": "live"
+  },
+  {
+    "id": "cssteach",
+    "name": "cssteach",
+    "repo": "cssteach",
+    "description": "PWA that teaches CSS and SCSS at three skill levels",
+    "category": "Learning",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-06-18T20:27:35Z",
+    "status": "live",
+    "url": "https://cssteach.netlify.app"
+  },
+  {
+    "id": "goteach",
+    "name": "goteach",
+    "repo": "goteach",
+    "description": "GoTeach: A comprehensive, interlinked guide to the game of Go (Weiqi/Baduk) with SVG diagrams - for all skill levels",
+    "category": "Learning",
+    "tags": [],
+    "language": null,
+    "isPrivateRepo": false,
+    "lastPushed": "2026-06-18T20:27:23Z",
+    "status": "live"
+  },
+  {
+    "id": "chessteach",
+    "name": "chessteach",
+    "repo": "chessteach",
+    "description": "Comprehensive chess teaching wiki — openings, tactics, middlegame, endgames, fundamentals, famous games",
+    "category": "Learning",
+    "tags": [],
+    "language": "JavaScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-06-18T20:27:20Z",
+    "status": "live"
+  },
+  {
+    "id": "pandemic-game-viewer",
+    "name": "pandemic-game-viewer",
+    "repo": "pandemic-game-viewer",
+    "description": "displays pandemic games as played by autocardboard",
+    "category": "Games",
+    "tags": [],
+    "language": "HTML",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-06-19T08:38:42Z",
+    "status": "live"
+  },
+  {
+    "id": "autohanamikoji",
+    "name": "autoHanamikoji",
+    "repo": "autoHanamikoji",
+    "description": "Bots playing each other at Hanamikoji developed in Angular",
+    "category": "Games",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-06-19T08:38:26Z",
+    "status": "live"
+  },
+  {
+    "id": "nudge",
+    "name": "nudge",
+    "repo": "nudge",
+    "description": "An ADHD-friendly step-by-step procedure runner. Define everyday tasks in YAML, follow them one step at a time with visual timers, progress tracking, and pause/resume.",
+    "category": "Wellbeing",
+    "tags": [],
+    "language": null,
+    "isPrivateRepo": false,
+    "lastPushed": "2026-03-01T08:48:12Z",
+    "status": "live"
+  },
+  {
+    "id": "uk-parliament-data-mcp",
+    "name": "uk-parliament-data-mcp",
+    "url": "https://pypi.org/project/uk-parliament-mcp/",
+    "repo": "uk-parliament-data-mcp",
+    "description": "UK Parliament MCP Server: 209 tools bridging AI assistants with live UK Parliament data (MPs, bills, votes, committees, Hansard and more). Includes a full CLI. Unofficial, community-built.",
+    "category": "Parliament",
+    "tags": ["mcp", "cli", "hansard", "python"],
+    "language": "Python",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-22T22:57:03Z",
+    "status": "live",
+    "accent": "#3b5ba5",
+    "thumbMode": "generated"
+  },
+  {
+    "id": "witness",
+    "name": "witness",
+    "repo": "witness",
+    "description": "Open-source, federated video evidence tool for citizen journalists. Safety first, evidence second. Covert recording, tamper-proof hashing, and decentralized storage.",
+    "category": "Tools",
+    "tags": [],
+    "language": "Kotlin",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-06T21:00:38Z",
+    "status": "live"
+  },
+  {
+    "id": "vox",
+    "name": "Vox",
+    "repo": "Vox",
+    "description": "Open-source screen reader for Windows 11, built in C#/.NET 9 with UI Automation, priority-based speech and first-class Chrome/Edge browsing.",
+    "category": "Tools",
+    "tags": [],
+    "language": "C#",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-17T15:12:36Z",
+    "status": "live"
+  },
+  {
+    "id": "galaga",
+    "name": "galaga",
+    "repo": "galaga",
+    "description": "Classic 1981 Galaga arcade game rebuilt in Rust with Bevy: formation AI, tractor beam captures, dual fighter and retro audio.",
+    "category": "Games",
+    "tags": [],
+    "language": "Rust",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-06T16:25:21Z",
+    "status": "live"
+  }
+]

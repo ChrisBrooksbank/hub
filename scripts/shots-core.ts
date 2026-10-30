@@ -27,7 +27,7 @@ export function parseArgs(argv: readonly string[]): ShotOptions {
   return options
 }
 
-export type SkipReason = 'hidden' | 'dead' | 'generated' | 'not-selected' | 'up-to-date'
+export type SkipReason = 'hidden' | 'no-url' | 'dead' | 'generated' | 'not-selected' | 'up-to-date'
 
 /**
  * Decide whether a site needs a capture. `thumbMtime` is the existing thumbnail's mtime in ms
@@ -40,6 +40,7 @@ export function skipReason(
 ): SkipReason | undefined {
   if (options.only !== undefined && site.id !== options.only) return 'not-selected'
   if (site.hidden) return 'hidden'
+  if (!site.url) return 'no-url'
   if (site.status === 'dead') return 'dead'
   if (site.thumbMode === 'generated') return 'generated'
   if (!options.force && thumbMtime !== undefined) {
@@ -65,6 +66,7 @@ export interface ShotBrowser {
 
 /** Visit a site and return a raw PNG screenshot. The page is always closed. */
 export async function captureSite(browser: ShotBrowser, site: Site): Promise<Buffer> {
+  if (!site.url) throw new Error(`${site.id} has no URL to capture`)
   const page = await browser.newPage({ viewport: VIEWPORT })
   try {
     await page.goto(site.url, { waitUntil: 'networkidle', timeout: NAV_TIMEOUT_MS })

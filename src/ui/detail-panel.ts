@@ -1,4 +1,7 @@
 import type { Site } from '../data/schema'
+import { PROFILE, type ProfileLink } from '../profile'
+import type { Favourites } from './favourites'
+import { repoUrl } from './links'
 
 const FOCUSABLE =
   'a[href], button:not([disabled]), input, select, textarea, [tabindex]:not([tabindex="-1"])'
@@ -7,13 +10,26 @@ export interface DetailPanel {
   readonly element: HTMLElement
   /** Shows the site; remembers the focused element so close() can restore it. */
   open(site: Site): void
+  /** Shows an About panel (the Joker cards): a name, a line of text and outbound links. */
+  openAbout(about: AboutContent): void
   /** Hides the panel and restores focus; does not call `onClose`. */
   close(): void
   readonly isOpen: boolean
   dispose(): void
 }
 
+export interface AboutContent {
+  name: string
+  text: string
+  links: readonly ProfileLink[]
+  /** Optional portrait shown above the text. */
+  photo?: string
+}
+
 export interface DetailPanelOptions {
+  /** When given, the panel shows a favourite toggle for the open site. */
+  favourites?: Favourites
+
   /** Called after the user closes the panel via its button or Escape (not via close()). */
   onClose?: () => void
 }
@@ -120,10 +136,12 @@ export function createDetailPanel(
       heading.id = 'detail-title'
       element.setAttribute('aria-labelledby', heading.id)
 
-      const launch = text('a', `Launch ${site.name}`, 'launch')
-      launch.href = site.url
-      launch.target = '_blank'
-      launch.rel = 'noopener'
+      const launch = site.url ? text('a', `Launch ${site.name}`, 'launch') : undefined
+      if (launch && site.url) {
+        launch.href = site.url
+        launch.target = '_blank'
+        launch.rel = 'noopener'
+      }
 
       const close = text('button', 'Close')
       close.type = 'button'
@@ -146,11 +164,30 @@ export function createDetailPanel(
         children.push(img)
       }
       if (site.description) children.push(text('p', site.description))
+      children.push(text('p', PROFILE.credit, 'credit'))
       if (site.status === 'dead') children.push(text('p', 'May be offline', 'offline'))
-      children.push(facts, launch)
+      children.push(facts)
+      if (launch) children.push(launch)
+      else children.push(text('p', 'No live demo yet. The code is on GitHub.', 'offline'))
+      const { favourites } = options
+      if (favourites) {
+        const heart = text('button', '', 'fav')
+        heart.type = 'button'
+        const paint = (): void => {
+          const on = favourites.has(site.id)
+          heart.textContent = on ? '★ Favourite' : '☆ Add to favourites'
+          heart.setAttribute('aria-pressed', String(on))
+        }
+        paint()
+        heart.addEventListener('click', () => {
+          favourites.toggle(site.id)
+          paint()
+        })
+        children.push(heart)
+      }
       if (site.repo && !site.isPrivateRepo) {
-        const repo = text('a', 'View source on GitHub')
-        repo.href = site.repo.startsWith('http') ? site.repo : `https://github.com/${site.repo}`
+        const repo = text('a', 'View source on GitHub', launch ? '' : 'launch')
+        repo.href = repoUrl(site.repo)
         repo.rel = 'noopener'
         repo.target = '_blank'
         children.push(repo)
@@ -159,7 +196,40 @@ export function createDetailPanel(
 
       element.replaceChildren(...children)
       element.hidden = false
-      launch.focus()
+      const first = launch ?? element.querySelector<HTMLElement>('a.launch, button')
+      first?.focus()
+    },
+    openAbout(about) {
+      if (!open) {
+        const active = document.activeElement
+        opener = active instanceof HTMLElement && active !== document.body ? active : null
+      }
+      open = true
+      const heading = text('h2', about.name)
+      heading.id = 'detail-title'
+      element.setAttribute('aria-labelledby', heading.id)
+      const close = text('button', 'Close')
+      close.type = 'button'
+      close.addEventListener('click', requestClose)
+      const links = about.links.map((link) => {
+        const anchor = text('a', link.label, 'launch')
+        anchor.href = link.href
+        anchor.target = '_blank'
+        anchor.rel = 'noopener'
+        return anchor
+      })
+      const children: Node[] = [heading]
+      if (about.photo) {
+        const img = document.createElement('img')
+        img.src = about.photo
+        img.alt = about.name
+        img.addEventListener('error', () => img.remove(), { once: true })
+        children.push(img)
+      }
+      children.push(text('p', about.text), ...links, close)
+      element.replaceChildren(...children)
+      element.hidden = false
+      ;(links[0] ?? close).focus()
     },
     close: finish,
     dispose() {

@@ -27,25 +27,41 @@ const sites = [
 ]
 
 describe('filterSites', () => {
+  it('keeps only favourites when asked', () => {
+    const filter = { category: null, query: '', favouritesOnly: true }
+    expect(filterSites(sites, filter, (id) => id === 'globe').map((s) => s.id)).toEqual(['globe'])
+  })
   it('returns everything for the initial filter', () => {
-    expect(filterSites(sites, { category: null, query: '' })).toHaveLength(3)
+    expect(filterSites(sites, { category: null, query: '', favouritesOnly: false })).toHaveLength(3)
   })
   it('filters by category', () => {
-    expect(filterSites(sites, { category: 'Games', query: '' }).map((s) => s.id)).toEqual(['maze'])
+    expect(
+      filterSites(sites, { category: 'Games', query: '', favouritesOnly: false }).map((s) => s.id),
+    ).toEqual(['maze'])
   })
   it('searches name, tag and description case-insensitively', () => {
-    expect(filterSites(sites, { category: null, query: 'GLO' }).map((s) => s.id)).toEqual(['globe'])
-    expect(filterSites(sites, { category: null, query: 'earth' }).map((s) => s.id)).toEqual([
-      'globe',
-    ])
-    expect(filterSites(sites, { category: null, query: 'calm' }).map((s) => s.id)).toEqual([
-      'breathe',
-    ])
+    expect(
+      filterSites(sites, { category: null, query: 'GLO', favouritesOnly: false }).map((s) => s.id),
+    ).toEqual(['globe'])
+    expect(
+      filterSites(sites, { category: null, query: 'earth', favouritesOnly: false }).map(
+        (s) => s.id,
+      ),
+    ).toEqual(['globe'])
+    expect(
+      filterSites(sites, { category: null, query: 'calm', favouritesOnly: false }).map((s) => s.id),
+    ).toEqual(['breathe'])
   })
   it('requires every term and combines with category', () => {
-    expect(filterSites(sites, { category: null, query: 'find puzzle' })).toHaveLength(1)
-    expect(filterSites(sites, { category: null, query: 'find calm' })).toHaveLength(0)
-    expect(filterSites(sites, { category: 'Wellbeing', query: 'maze' })).toHaveLength(0)
+    expect(
+      filterSites(sites, { category: null, query: 'find puzzle', favouritesOnly: false }),
+    ).toHaveLength(1)
+    expect(
+      filterSites(sites, { category: null, query: 'find calm', favouritesOnly: false }),
+    ).toHaveLength(0)
+    expect(
+      filterSites(sites, { category: 'Wellbeing', query: 'maze', favouritesOnly: false }),
+    ).toHaveLength(0)
   })
 })
 
@@ -69,7 +85,7 @@ describe('createStore', () => {
     expect(store.get().visible.map((s) => s.id)).toEqual(['maze'])
     expect(listener).toHaveBeenCalledTimes(1)
     unsubscribe()
-    store.setFilter({ query: 'x' })
+    store.setFilter({ query: 'x', favouritesOnly: false })
     expect(listener).toHaveBeenCalledTimes(1)
   })
 })

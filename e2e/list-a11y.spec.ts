@@ -18,7 +18,7 @@ async function seriousViolations(page: import('@playwright/test').Page) {
 }
 
 test('list view has no serious or critical axe violations', async ({ page }) => {
-  await page.goto('/?theme=basic')
+  await page.goto('/?view=list')
   await expect(page.locator('.list-view a').first()).toBeVisible()
   expect(await seriousViolations(page)).toEqual([])
 })
@@ -26,7 +26,7 @@ test('list view has no serious or critical axe violations', async ({ page }) => 
 test('list view stays usable at 200% zoom', async ({ page }) => {
   // 200% zoom on a 1280x1024 window is a 640x512 CSS viewport.
   await page.setViewportSize({ width: 640, height: 512 })
-  await page.goto('/?theme=basic')
+  await page.goto('/?view=list')
   await expect(page.locator('.list-view a').first()).toBeVisible()
   const overflow = await page.evaluate(
     () => document.documentElement.scrollWidth - document.documentElement.clientWidth,
@@ -35,10 +35,10 @@ test('list view stays usable at 200% zoom', async ({ page }) => {
   expect(await seriousViolations(page)).toEqual([])
 })
 
-test('Basic initial load requests no three.js', async ({ page }) => {
+test('List view initial load requests no three.js', async ({ page }) => {
   const urls: string[] = []
   page.on('request', (req) => urls.push(req.url()))
-  await page.goto('/?theme=basic')
+  await page.goto('/?view=list')
   await expect(page.locator('.list-view a').first()).toBeVisible()
   expect(urls.filter((u) => /three/i.test(u))).toEqual([])
 })

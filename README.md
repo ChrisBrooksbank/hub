@@ -1,6 +1,6 @@
 # Hub
 
-A 3D (three.js) directory of Chris's deployed websites. Static site, deployed on Netlify.
+A directory of Chris's deployed websites: a deck of cards dealt onto a 3D (three.js) table, plus a plain list view. Static site, deployed on Netlify.
 
 Stack: Vite + TypeScript (strict) + vanilla three.js + zod. Tests: Vitest (unit), Playwright (smoke/visual).
 Specs live in `specs/`, the build plan in `IMPLEMENTATION_PLAN.md`.
@@ -57,4 +57,4 @@ Creating the Netlify site is a manual step:
 
 ## Accessibility
 
-Every 3D feature has a non-3D equivalent: the Basic theme and the "List view" toggle give a plain, semantic list of sites. `prefers-reduced-motion` is respected everywhere.
+Every 3D feature has a non-3D equivalent: the "List" view toggle (and the automatic fallback without WebGL) gives a plain, semantic list of sites. `prefers-reduced-motion` is respected everywhere.

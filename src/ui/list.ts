@@ -1,6 +1,9 @@
 import type { Site } from '../data/schema'
 import { artDataUrl } from '../engine/procedural-art'
 import { categoriesOf } from './filter'
+import { PROFILE, profileLinks } from '../profile'
+import type { Favourites } from './favourites'
+import { repoUrl } from './links'
 import type { Store } from './store'
 
 function el<K extends keyof HTMLElementTagNameMap>(
@@ -21,10 +24,11 @@ export function groupByCategory(sites: readonly Site[]): [string, Site[]][] {
   ])
 }
 
-function renderSite(site: Site): HTMLLIElement {
-  const link = el('a', { href: site.url, textContent: site.name, rel: 'noopener' })
-  const title = el('h3', {}, [link])
-  const item = el('li', { className: 'site' }, [title])
+function renderSite(site: Site, favourites: Favourites): HTMLLIElement {
+  const title = el('h3', {}, [
+    site.url ? el('a', { href: site.url, textContent: site.name, rel: 'noopener' }) : site.name,
+  ])
+  const item = el('li', { className: site.url ? 'site' : 'site site--nodemo' }, [title])
   const generated = site.thumbMode === 'generated' || !site.thumb
   const src = generated ? artDataUrl(site.id, site.accent) : site.thumb
   if (src) {
@@ -46,64 +50,73 @@ function renderSite(site: Site): HTMLLIElement {
   if (site.description) item.append(el('p', { textContent: site.description }))
   if (site.status === 'dead')
     item.append(el('p', { className: 'offline', textContent: 'May be offline' }))
+  const favourite = favourites.has(site.id)
+  const heart = el('button', {
+    type: 'button',
+    className: 'fav',
+    textContent: favourite ? '★ Favourite' : '☆ Favourite',
+  })
+  heart.setAttribute('aria-pressed', String(favourite))
+  heart.setAttribute('aria-label', `Favourite ${site.name}`)
+  heart.addEventListener('click', () => favourites.toggle(site.id))
+  item.append(heart)
+  if (!site.url && site.repo) {
+    item.append(
+      el('a', { href: repoUrl(site.repo), textContent: 'View source on GitHub', rel: 'noopener' }),
+    )
+  }
   return item
 }
 
 /**
  * Semantic, framework-free list view. Renders the store's visible sites grouped by
- * category with category filter buttons and a search box. Returns a dispose function.
+ * category; the toolbar owns search and filtering. Returns a dispose function.
  */
 export function createListView(
   parent: HTMLElement,
   store: Store,
-  allSites: readonly Site[],
+  favourites: Favourites,
 ): () => void {
-  const root = el('main', { className: 'list-view' })
-  const search = el('input', { type: 'search', id: 'site-search', autocomplete: 'off' })
-  const searchLabel = el('label', { htmlFor: 'site-search', textContent: 'Search sites' })
-
-  const chips = el('div', { role: 'group' })
-  chips.setAttribute('aria-label', 'Filter by category')
-  const chipButtons = new Map<string | null, HTMLButtonElement>()
-  for (const category of [null, ...categoriesOf(allSites)]) {
-    const button = el('button', { type: 'button', textContent: category ?? 'All' })
-    button.addEventListener('click', () => store.setFilter({ category }))
-    chipButtons.set(category, button)
-    chips.append(button)
-  }
-
-  const results = el('div', { className: 'results' })
-  root.append(
-    el('h1', { textContent: 'Chris Brooksbank’s sites' }),
-    searchLabel,
-    search,
-    chips,
-    results,
-  )
-
-  search.addEventListener('input', () => store.setFilter({ query: search.value }))
+  const root = el('div', { className: 'list-view' })
 
   const render = (): void => {
-    const { visible, filter } = store.get()
-    chipButtons.forEach((button, category) =>
-      button.setAttribute('aria-pressed', String(category === filter.category)),
+    const { visible } = store.get()
+    root.replaceChildren(
+      ...[
+        ...groupByCategory(visible.filter((site) => site.url)),
+        ['No live demo yet', visible.filter((site) => !site.url)] as [string, Site[]],
+      ]
+        .filter(([, sites]) => sites.length > 0)
+        .map(([category, sites]) =>
+          el('section', {}, [
+            el('h2', { textContent: category }),
+            el(
+              'ul',
+              {},
+              sites.map((site) => renderSite(site, favourites)),
+            ),
+          ]),
+        ),
     )
-    results.replaceChildren(
-      ...groupByCategory(visible).map(([category, sites]) =>
-        el('section', {}, [
-          el('h2', { textContent: category }),
-          el('ul', {}, sites.map(renderSite)),
+    if (visible.length === 0) root.append(el('p', { textContent: 'No sites match.' }))
+    root.append(
+      el('footer', { className: 'credit' }, [
+        `${PROFILE.credit} `,
+        ...profileLinks().flatMap((link, index) => [
+          index > 0 ? ' · ' : '',
+          el('a', { href: link.href, textContent: link.label, rel: 'noopener', target: '_blank' }),
         ]),
-      ),
+      ]),
     )
-    if (visible.length === 0) results.append(el('p', { textContent: 'No sites match.' }))
   }
 
   render()
   const unsubscribe = store.subscribe(render)
+  const unsubscribeFavourites = favourites.subscribe(render)
   parent.append(root)
   return () => {
     unsubscribe()
+    unsubscribeFavourites()
     root.remove()
   }
 }

@@ -13,7 +13,8 @@ export const CATEGORIES = [
 export const SiteSchema = z.object({
   id: z.string().min(1),
   name: z.string().min(1),
-  url: z.url(),
+  /** The deployed site. Absent for projects with no live demo, which show as faded cards. */
+  url: z.url().optional(),
   repo: z.string().optional(),
   description: z.string(),
   category: z.string().min(1),

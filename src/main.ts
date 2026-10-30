@@ -1,68 +1,98 @@
-import './ui/basic.css'
+import './ui/app.css'
 import { sites } from 'virtual:sites'
-import { getTheme, THEMES } from './themes'
-import type { Theme } from './themes/types'
-import {
-  hasWebGL,
-  loadStoredTheme,
-  prefersBasic,
-  prefersReducedMotion,
-  resolveThemeId,
-  saveTheme,
-} from './themes/preference'
+import { createFavourites } from './ui/favourites'
 import { resultsMessage } from './ui/filter'
 import { createListView } from './ui/list'
 import { createLiveRegion } from './ui/live-region'
 import { createStore } from './ui/store'
-import { createThemeSwitcher } from './ui/theme-switcher'
+import { createPwaBar } from './ui/pwa-bar'
+import { createToolbar } from './ui/toolbar'
+import { startPwa } from './pwa'
+import {
+  hasWebGL,
+  loadStoredView,
+  prefersReducedMotion,
+  resolveView,
+  saveView,
+  type View,
+} from './ui/view-preference'
 
 const app = document.getElementById('app')
 if (app) {
-  const store = createStore(sites)
+  const favourites = createFavourites()
+  const store = createStore(sites, favourites)
   const announce = createLiveRegion(app)
   store.subscribe((state) => announce(resultsMessage(state.visible.length)))
 
-  const initial = getTheme(
-    resolveThemeId({ search: location.search, stored: loadStoredTheme(), webgl: hasWebGL() }),
-  )
-
   const reducedMotion = prefersReducedMotion((query) => window.matchMedia(query))
-  let generation = 0
+  const webgl = hasWebGL()
+  let view = resolveView({ search: location.search, stored: loadStoredView(), webgl })
+  let shuffle = (): void => {}
 
-  // three.js must only ever be reached via dynamic import() from the scene path.
-  const mount = (theme: Theme): (() => void) => {
-    if (theme.presentation === 'list') return createListView(app, store, sites)
-    const token = ++generation
-    let dispose: (() => void) | undefined
+  const stage = document.createElement('main')
+  stage.className = 'stage'
+
+  // three.js must only ever be reached via dynamic import() from the table path.
+  const mount = (next: View): (() => void) => {
+    stage.className = `stage stage--${next}`
+    if (next === 'list') {
+      shuffle = () => {}
+      return createListView(stage, store, favourites)
+    }
     let cancelled = false
-    void import('./ui/scene-mount')
-      .then(({ mountScene }) => {
-        if (cancelled || token !== generation) return
-        dispose = mountScene({ parent: app, store, sites, theme, reducedMotion })
+    let dispose: (() => void) | undefined
+    void import('./table/mount')
+      .then(({ mountTable }) => {
+        if (cancelled) return
+        const mounted = mountTable({
+          parent: stage,
+          store,
+          favourites,
+          sites,
+          reducedMotion,
+          handSize: window.matchMedia('(max-width: 700px)').matches ? 12 : undefined,
+        })
+        shuffle = mounted.shuffle
+        dispose = mounted.dispose
       })
       .catch(() => {
         if (cancelled) return
-        dispose = createListView(app, store, sites)
+        stage.className = 'stage stage--list'
+        toolbar.setView('list')
+        dispose = createListView(stage, store, favourites)
       })
     return () => {
       cancelled = true
       dispose?.()
     }
   }
-  let unmount = mount(initial)
 
-  const switcher = createThemeSwitcher({
-    themes: THEMES,
-    current: initial.id,
-    suggestBasic: prefersBasic((query) => window.matchMedia(query)),
-    onSelect: (id) => {
-      saveTheme(id)
-      app.dataset.theme = id
+  let unmount = (): void => {}
+  const toolbar = createToolbar({
+    store,
+    sites,
+    favourites,
+    view,
+    onShuffle: () => shuffle(),
+    onView: (next) => {
+      if (next === view || (next === 'table' && !webgl)) return
+      view = next
+      saveView(next)
+      toolbar.setView(next)
       unmount()
-      unmount = mount(getTheme(id))
+      unmount = mount(next)
     },
   })
-  app.prepend(switcher.element)
-  app.dataset.theme = initial.id
+  app.prepend(toolbar.element)
+  app.append(stage)
+  unmount = mount(view)
+  app.dataset.view = view
+
+  const pwaBar = createPwaBar(app)
+  startPwa({
+    onInstallAvailable: (install) => pwaBar.showInstall(install),
+    onInstalled: () => pwaBar.hide(),
+    onUpdateReady: (apply) => pwaBar.showUpdate(apply),
+  })
   app.dataset.sites = String(store.get().visible.length)
 }
