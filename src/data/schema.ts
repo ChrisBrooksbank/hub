@@ -28,6 +28,8 @@ export const SiteSchema = z.object({
   shotWaitFor: z.string().optional(),
   shotClick: z.string().optional(),
   hidden: z.boolean().optional(),
+  /** Show on the table even with no live demo, instead of behind the "No live demo" toggle. */
+  showByDefault: z.boolean().optional(),
   accent: z
     .string()
     .regex(/^#[0-9a-fA-F]{6}$/, 'accent must be a #rrggbb colour')

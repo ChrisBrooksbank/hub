@@ -27,6 +27,16 @@ const sites = [
 ]
 
 describe('filterSites', () => {
+  it('hides projects with no live demo unless asked or flagged to show', () => {
+    const noDemo = { ...sites[0]!, id: 'nodemo', url: undefined }
+    const flagged = { ...sites[0]!, id: 'flagged', url: undefined, showByDefault: true }
+    const all = [...sites, noDemo, flagged]
+    const base = { category: null, query: '', favouritesOnly: false }
+    const ids = (filter: object) => filterSites(all, { ...base, ...filter }).map((s) => s.id)
+    expect(ids({})).not.toContain('nodemo')
+    expect(ids({})).toContain('flagged')
+    expect(ids({ withoutDemo: true })).toContain('nodemo')
+  })
   it('keeps only favourites when asked', () => {
     const filter = { category: null, query: '', favouritesOnly: true }
     expect(filterSites(sites, filter, (id) => id === 'globe').map((s) => s.id)).toEqual(['globe'])

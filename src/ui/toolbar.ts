@@ -62,7 +62,7 @@ export function createToolbar(options: ToolbarOptions): Toolbar {
     store.setFilter({ favouritesOnly: !store.get().filter.favouritesOnly }),
   )
 
-  const noDemoCount = sites.filter((site) => !site.url).length
+  const noDemoCount = sites.filter((site) => !site.url && !site.showByDefault).length
   const demoToggle = el('button', { type: 'button', className: 'chip-extra' })
   demoToggle.addEventListener('click', () =>
     store.setFilter({ withoutDemo: !store.get().filter.withoutDemo }),

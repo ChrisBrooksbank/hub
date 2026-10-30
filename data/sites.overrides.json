@@ -261,7 +261,8 @@
     "language": "Kotlin",
     "isPrivateRepo": false,
     "lastPushed": "2026-10-06T21:00:38Z",
-    "status": "live"
+    "status": "live",
+    "showByDefault": true
   },
   {
     "id": "vox",

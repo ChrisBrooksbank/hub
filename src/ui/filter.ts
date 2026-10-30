@@ -20,7 +20,7 @@ export function filterSites(
 ): Site[] {
   const terms = filter.query.toLowerCase().split(/\s+/).filter(Boolean)
   return sites.filter((site) => {
-    if (!site.url && !filter.withoutDemo) return false
+    if (!site.url && !site.showByDefault && !filter.withoutDemo) return false
     if (filter.favouritesOnly && !isFavourite(site.id)) return false
     if (filter.category !== null && site.category !== filter.category) return false
     if (terms.length === 0) return true
