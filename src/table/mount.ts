@@ -79,6 +79,8 @@ export function mountTable(options: TableMountOptions): TableMount {
       more.textContent = `Deal ${Math.min(remaining, options.handSize ?? remaining)} more (${remaining} left in the deck)`
     },
     favourites: favourites.ids(),
+    onChip: (category) =>
+      store.setFilter({ category: store.get().filter.category === category ? null : category }),
     onSelect: (id) => {
       writeHash(id)
       show(id)
@@ -113,6 +115,9 @@ export function mountTable(options: TableMountOptions): TableMount {
   legend.textContent = PROFILE.scope
   legend.hidden = sites.every((site) => site.url)
   parent.append(legend)
+  const syncCategory = (): void => table.setCategory(store.get().filter.category)
+  syncCategory()
+  const unsubscribeCategory = store.subscribe(syncCategory)
   const unsubscribeFavourites = favourites.subscribe(() => table.setFavourites(favourites.ids()))
   const onHashChange = (): void => show(idFromHash())
   window.addEventListener('hashchange', onHashChange)
@@ -128,6 +133,7 @@ export function mountTable(options: TableMountOptions): TableMount {
       window.removeEventListener('hashchange', onHashChange)
       unbindFilter()
       unsubscribeFavourites()
+      unsubscribeCategory()
       list.dispose()
       legend.remove()
       more.remove()

@@ -95,6 +95,7 @@ button {
 }
 
 .toolbar .title {
+  flex: 0 1 17rem;
   min-width: 0;
 }
 
@@ -102,7 +103,6 @@ button {
   margin: 0;
   color: var(--muted);
   font-size: 0.8rem;
-  white-space: nowrap;
 }
 
 .detail-panel .credit,
@@ -188,27 +188,66 @@ button {
 
 @media (max-width: 700px) {
   .toolbar {
-    padding: 0.5rem 0.75rem;
+    gap: 0.4rem 0.5rem;
+    padding: 0.4rem 0.75rem;
+  }
+
+  .toolbar .title {
+    flex: 1 1 auto;
+    order: 1;
+  }
+
+  .toolbar .byline,
+  .count {
+    display: none;
+  }
+
+  .toolbar h1 {
+    font-size: 1rem;
+  }
+
+  .actions {
+    display: contents;
+  }
+
+  .actions .action {
+    order: 2;
+  }
+
+  .toggle {
+    order: 3;
   }
 
   .toolbar .search {
     flex: 1 1 8rem;
+    order: 3;
   }
 
   .chips {
+    flex: 1 1 100%;
     flex-wrap: nowrap;
-    order: 3;
+    order: 4;
+    margin: 0 -0.75rem;
+    padding: 0 0.75rem 0.1rem;
     overflow-x: auto;
-    padding-bottom: 0.25rem;
+    scrollbar-width: none;
   }
 
   .chips button {
     flex: none;
+    min-height: 36px;
+    white-space: nowrap;
   }
 
-  .actions {
-    flex-wrap: wrap;
-    margin-left: 0;
+  .chips .fav-filter,
+  .chips .chip-extra {
+    min-height: 36px;
+  }
+
+  .toolbar input,
+  .toolbar .action,
+  .toggle button {
+    min-height: 36px;
   }
 }
 
@@ -389,6 +428,13 @@ button {
 
 .legend[hidden] {
   display: none;
+}
+
+@media (max-width: 700px) {
+  /* The cards say "NO LIVE DEMO" themselves; keep the small screen clear. */
+  .legend {
+    display: none;
+  }
 }
 
 .pwa-bar {

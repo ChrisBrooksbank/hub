@@ -20,6 +20,7 @@
     "test:e2e": "playwright test",
     "sites:scan": "node scripts/scan.ts",
     "sites:shots": "node scripts/shots.ts",
+    "sites:clips": "node scripts/clips.ts",
     "perf:budget": "node scripts/bundle-budget.ts"
   },
   "dependencies": {

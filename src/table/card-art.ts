@@ -58,21 +58,23 @@ function roundedRect(
 
 function drawCover(
   context: CanvasRenderingContext2D,
-  source: CanvasImageSource & { width: number; height: number },
+  source: CanvasImageSource,
+  sourceWidth: number,
+  sourceHeight: number,
   x: number,
   y: number,
   width: number,
   height: number,
 ): void {
-  const scale = Math.max(width / source.width, height / source.height)
+  const scale = Math.max(width / sourceWidth, height / sourceHeight)
   const sw = width / scale
   const sh = height / scale
   context.drawImage(
     source,
-    (source.width - sw) / 2,
+    (sourceWidth - sw) / 2,
     0,
     sw,
-    Math.min(sh, source.height),
+    Math.min(sh, sourceHeight),
     x,
     y,
     width,
@@ -91,6 +93,10 @@ export function drawCardFace(
   favourite = false,
   /** A project with no live demo: greyed, dashed, and labelled. */
   muted = false,
+  /** The card's README clip, once it is playing: its current frame replaces the picture. */
+  clip?: HTMLVideoElement,
+  /** Whether the card has a clip that is not playing yet (drawn with a play mark). */
+  playable = false,
 ): void {
   const context = canvas.getContext('2d')
   if (!context) return
@@ -105,10 +111,14 @@ export function drawCardFace(
   context.save()
   roundedRect(context, MARGIN, MARGIN, inner, IMAGE_HEIGHT, 14)
   context.clip()
-  const picture = image ?? createArtCanvas(site.id, site.accent)
+  const live = clip && clip.readyState >= 2 && clip.videoWidth > 0 ? clip : undefined
+  const picture = live ?? image ?? createArtCanvas(site.id, site.accent)
   if (muted && 'filter' in context) context.filter = 'grayscale(1) contrast(0.9)'
-  if (picture) drawCover(context, picture, MARGIN, MARGIN, inner, IMAGE_HEIGHT)
-  else {
+  if (picture) {
+    const sourceWidth = live ? live.videoWidth : (picture as { width: number }).width
+    const sourceHeight = live ? live.videoHeight : (picture as { height: number }).height
+    drawCover(context, picture, sourceWidth, sourceHeight, MARGIN, MARGIN, inner, IMAGE_HEIGHT)
+  } else {
     context.fillStyle = accent
     context.fillRect(MARGIN, MARGIN, inner, IMAGE_HEIGHT)
   }
@@ -129,6 +139,27 @@ export function drawCardFace(
     context.textAlign = 'left'
     context.textBaseline = 'middle'
     context.fillText('LIVE', MARGIN + 44, MARGIN + 28)
+    context.textBaseline = 'alphabetic'
+  }
+
+  if (playable && !live && !muted) {
+    const left = MARGIN + 12
+    const top = MARGIN + IMAGE_HEIGHT - 42
+    context.fillStyle = 'rgba(8, 20, 14, 0.78)'
+    context.beginPath()
+    context.roundRect(left, top, 70, 30, 15)
+    context.fill()
+    context.fillStyle = '#e9fff1'
+    context.beginPath()
+    context.moveTo(left + 16, top + 8)
+    context.lineTo(left + 16, top + 22)
+    context.lineTo(left + 28, top + 15)
+    context.closePath()
+    context.fill()
+    context.font = '700 14px system-ui, sans-serif'
+    context.textAlign = 'left'
+    context.textBaseline = 'middle'
+    context.fillText('DEMO', left + 34, top + 16)
     context.textBaseline = 'alphabetic'
   }
 

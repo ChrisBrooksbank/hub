@@ -84,6 +84,8 @@ export function createToolbar(options: ToolbarOptions): Toolbar {
     toggle.append(button)
   }
 
+  chips.append(favouritesToggle, demoToggle)
+
   const count = el('span', { className: 'count' })
 
   const element = el('header', { className: 'toolbar' }, [
@@ -96,7 +98,7 @@ export function createToolbar(options: ToolbarOptions): Toolbar {
     ]),
     el('div', { className: 'search' }, [searchLabel, search]),
     chips,
-    el('div', { className: 'actions' }, [count, favouritesToggle, demoToggle, shuffle, toggle]),
+    el('div', { className: 'actions' }, [count, shuffle, toggle]),
   ])
 
   const sync = (): void => {

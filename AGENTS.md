@@ -29,6 +29,7 @@ npm run test:e2e       # Playwright smoke tests
 ```bash
 npm run sites:scan     # Rebuild data/sites.generated.json from local repos + GitHub + Netlify
 npm run sites:shots    # Capture thumbnails to public/thumbs/ with Playwright
+npm run sites:clips    # Turn README GIFs into public/clips/*.mp4 (needs gh + ffmpeg)
 ```
 
 ## Validation (run before finishing a task)

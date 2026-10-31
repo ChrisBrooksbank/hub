@@ -2,6 +2,9 @@ import {
   Color,
   Material,
   Mesh,
+  NeutralToneMapping,
+  PCFShadowMap,
+  PMREMGenerator,
   Points,
   PerspectiveCamera,
   Scene,
@@ -9,6 +12,7 @@ import {
   WebGLRenderer,
   type Object3D,
 } from 'three'
+import { RoomEnvironment } from 'three/examples/jsm/environments/RoomEnvironment.js'
 
 /** The slice of WebGLRenderer the engine uses, so tests can supply a mock. */
 export type EngineRenderer = Pick<
@@ -59,6 +63,8 @@ export class SceneEngine {
   private elapsed = 0
   private running = false
   private disposed = false
+  private shadowsDirty = true
+  private environment: Texture | undefined
 
   constructor(options: SceneEngineOptions) {
     this.container = options.container
@@ -124,6 +130,10 @@ export class SceneEngine {
     this.lastTime = timeMs
     this.elapsed += delta
     for (const callback of this.frameCallbacks) callback(delta, this.elapsed)
+    if (this.shadowsDirty && this.renderer instanceof WebGLRenderer) {
+      this.renderer.shadowMap.needsUpdate = true
+    }
+    this.shadowsDirty = false
     this.renderer.render(this.scene, this.camera)
   }
 
@@ -137,11 +147,37 @@ export class SceneEngine {
     disposeObject(this.scene)
     this.scene.clear()
     if (this.scene.background instanceof Texture) this.scene.background.dispose()
+    this.environment?.dispose()
     this.renderer.dispose()
     this.renderer.domElement.remove()
   }
 
+  /** Shadow maps are drawn only on request, since most frames nothing has moved. */
+  requestShadowUpdate(): void {
+    this.shadowsDirty = true
+  }
+
+  /**
+   * A soft studio environment for glossy materials to reflect (assigned to them, not the whole
+   * scene, which keeps the matte ones cheap). Undefined with a mock renderer.
+   */
+  studioEnvironment(): Texture | undefined {
+    if (!(this.renderer instanceof WebGLRenderer)) return undefined
+    if (this.environment) return this.environment
+    const generator = new PMREMGenerator(this.renderer)
+    const room = new RoomEnvironment()
+    this.environment = generator.fromScene(room, 0.04).texture
+    room.dispose()
+    generator.dispose()
+    return this.environment
+  }
+
   private createDefaultRenderer(): EngineRenderer {
-    return new WebGLRenderer({ antialias: true, alpha: false })
+    const renderer = new WebGLRenderer({ antialias: true, alpha: false })
+    renderer.shadowMap.enabled = true
+    renderer.shadowMap.autoUpdate = false
+    renderer.shadowMap.type = PCFShadowMap
+    renderer.toneMapping = NeutralToneMapping
+    return renderer
   }
 }
