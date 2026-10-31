@@ -1,6 +1,5 @@
 import {
   AdditiveBlending,
-  BoxGeometry,
   BufferAttribute,
   BufferGeometry,
   CanvasTexture,
@@ -14,18 +13,24 @@ import {
   Material,
   Mesh,
   MeshBasicMaterial,
+  MeshPhysicalMaterial,
   MeshStandardMaterial,
   PlaneGeometry,
   Points,
   PointsMaterial,
+  Quaternion,
   RepeatWrapping,
+  RingGeometry,
   Shape,
   SRGBColorSpace,
   Path,
   Texture,
+  Vector3,
   type Object3D,
+  type Raycaster,
   type Scene,
 } from 'three'
+import { RoundedBoxGeometry } from 'three/examples/jsm/geometries/RoundedBoxGeometry.js'
 import { hashString, seededRandom } from '../engine/procedural-art'
 import { CARD_HEIGHT, CARD_WIDTH, TABLE_MARGIN, type TableArea } from './layout'
 
@@ -35,9 +40,31 @@ const MOTES = 70
 const TAU = Math.PI * 2
 const GOLD = '#e0bb68'
 
+export interface DecorOptions {
+  /** What the glossy props (chips, dice, rail) reflect. */
+  environment?: Texture
+  /** Cast real shadows; off on software rendering. */
+  shadows: boolean
+
+  /** One themed stack of chips per category, in order. */
+  categories: readonly { name: string; count: number }[]
+  /** A chip stack was clicked. */
+  onChip: (category: string) => void
+  /** The dice finished rolling with these faces up. */
+  onRoll: (faces: readonly number[]) => void
+}
+
 export interface Decor {
   /** Rebuilds the felt, rail and props for a new table area. */
   rebuild(area: TableArea): void
+  /** Whether the pointer is over a die or a chip stack; sets the tooltip text if so. */
+  hover(raycaster: Raycaster): string | null
+  /** Clicks whatever die or chip stack the ray hits (rolls the dice, flips a chip). */
+  press(raycaster: Raycaster): boolean
+  /** Whether a die or chip is mid-animation. */
+  animating(): boolean
+  /** Rings the stack of the category the table is filtered to. */
+  setActive(category: string | null): void
   /** Drifts the dust in the lamp light. */
   update(deltaSeconds: number): void
   /** Lamp brightness for a card at (x, z): 1 under the light, dimmer toward the rail. */
@@ -316,7 +343,25 @@ function ringGeometry(
   return geometry
 }
 
-function chipTextures(colour: string): { side: CanvasTexture; face: CanvasTexture } {
+interface ChipTheme {
+  colour: string
+  glyph: string
+}
+
+/** The chip a category gets; anything unlisted falls back to a plain grey chip. */
+const CHIP_THEMES: Record<string, ChipTheme> = {
+  Games: { colour: '#b3202a', glyph: '♠' },
+  Learning: { colour: '#1f4fb5', glyph: '♦' },
+  Wellbeing: { colour: '#1f8f4e', glyph: '♥' },
+  'Local (Chelmsford)': { colour: '#7a3fa0', glyph: '⌂' },
+  Tools: { colour: '#1d1b19', glyph: '⚙' },
+  '3D & Visual': { colour: '#c9761a', glyph: '3D' },
+  Parliament: { colour: '#12315c', glyph: '♛' },
+}
+const PLAIN_CHIP: ChipTheme = { colour: '#4a4a48', glyph: '•' }
+
+function chipTextures(theme: ChipTheme): { side: CanvasTexture; face: CanvasTexture } {
+  const { colour, glyph } = theme
   const sideCanvas = canvasOf(256, 32)
   const side = sideCanvas.getContext('2d')
   if (side) {
@@ -325,24 +370,48 @@ function chipTextures(colour: string): { side: CanvasTexture; face: CanvasTextur
     side.fillStyle = '#f4efe2'
     for (let i = 0; i < 8; i++) side.fillRect(i * 32 + 6, 0, 20, 32)
   }
-  const faceCanvas = canvasOf(128, 128)
+  const faceCanvas = canvasOf(256, 256)
   const face = faceCanvas.getContext('2d')
   if (face) {
     face.fillStyle = colour
-    face.fillRect(0, 0, 128, 128)
+    face.fillRect(0, 0, 256, 256)
     face.strokeStyle = '#f4efe2'
-    face.lineWidth = 7
-    face.setLineDash([14, 10])
+    face.lineWidth = 16
+    face.setLineDash([32, 22])
     face.beginPath()
-    face.arc(64, 64, 52, 0, TAU)
+    face.arc(128, 128, 108, 0, TAU)
     face.stroke()
     face.setLineDash([])
-    face.lineWidth = 3
+    face.lineWidth = 5
     face.beginPath()
-    face.arc(64, 64, 34, 0, TAU)
+    face.arc(128, 128, 82, 0, TAU)
     face.stroke()
+    face.fillStyle = 'rgba(244, 239, 226, 0.14)'
+    face.beginPath()
+    face.arc(128, 128, 78, 0, TAU)
+    face.fill()
+    face.fillStyle = '#f4efe2'
+    face.textAlign = 'center'
+    face.textBaseline = 'middle'
+    face.font = `700 ${glyph.length > 1 ? 66 : 92}px Georgia, 'Segoe UI Symbol', serif`
+    face.fillText(glyph, 128, 134)
   }
   return { side: textureOf(sideCanvas, true), face: textureOf(faceCanvas) }
+}
+
+function grainTexture(seed: string, size = 128, from = 70, to = 190): CanvasTexture {
+  const canvas = canvasOf(size, size)
+  const c = canvas.getContext('2d')
+  if (c) {
+    const image = c.createImageData(size, size)
+    const random = seededRandom(hashString(seed))
+    for (let i = 0; i < image.data.length; i += 4) {
+      image.data[i] = image.data[i + 1] = image.data[i + 2] = from + random() * (to - from)
+      image.data[i + 3] = 255
+    }
+    c.putImageData(image, 0, 0)
+  }
+  return textureOf(canvas, true)
 }
 
 function pipTexture(pips: number): CanvasTexture {
@@ -394,26 +463,85 @@ function pipTexture(pips: number): CanvasTexture {
   return textureOf(canvas)
 }
 
-function disposeTree(root: Object3D): void {
+function disposeTree(root: Object3D, keep?: Texture): void {
   root.traverse((object) => {
     if (!(object instanceof Mesh) && !(object instanceof Points)) return
     object.geometry.dispose()
     const materials: Material | Material[] = object.material
     for (const material of Array.isArray(materials) ? materials : [materials]) {
-      for (const value of Object.values(material)) if (value instanceof Texture) value.dispose()
+      for (const value of Object.values(material)) {
+        if (value instanceof Texture && value !== keep) value.dispose()
+      }
       material.dispose()
     }
   })
 }
 
+const DIE_SIZE = 0.95
+/** Local face normals of the die, in the order of its materials: 3, 4, 1, 6, 2, 5. */
+const DIE_FACES: readonly (readonly [number, Vector3])[] = [
+  [3, new Vector3(1, 0, 0)],
+  [4, new Vector3(-1, 0, 0)],
+  [1, new Vector3(0, 1, 0)],
+  [6, new Vector3(0, -1, 0)],
+  [2, new Vector3(0, 0, 1)],
+  [5, new Vector3(0, 0, -1)],
+]
+const UP = new Vector3(0, 1, 0)
+const ROLL_SECONDS = 1.25
+const HOP_SECONDS = 0.8
+/** Spots for the chip stacks: a cluster in the near-right corner, another far-left. */
+const STACK_SPOTS: readonly (readonly [corner: 0 | 1, dx: number, dz: number])[] = [
+  [0, 0, 0],
+  [0, -1.4, 0.8],
+  [0, 0.2, -1.3],
+  [0, -1.6, -0.9],
+  [1, 0, 0],
+  [1, 1.2, -0.5],
+  [1, 0.4, 1.2],
+]
+
+interface Die {
+  mesh: Mesh
+  homeX: number
+  homeZ: number
+  rolling: boolean
+  clock: number
+  duration: number
+  value: number
+  fromX: number
+  fromZ: number
+  toX: number
+  toZ: number
+  from: Quaternion
+  to: Quaternion
+  axis: Vector3
+  turns: number
+}
+
+interface Stack {
+  category: string
+  chips: Mesh[]
+  topY: number
+  hop: number
+  ring: Mesh
+}
+
+const easeOut = (t: number): number => 1 - (1 - t) ** 3
+
 /** The table dressing: felt, padded rail, wood trim, chips, dice, lamp light and drifting dust. */
-export function createDecor(scene: Scene, reducedMotion: boolean): Decor {
+export function createDecor(scene: Scene, reducedMotion: boolean, options: DecorOptions): Decor {
   scene.background = new Color('#0b0806')
   const root = new Group()
   scene.add(root)
   let current: TableArea = { centerX: 0, centerZ: 0, width: 30, depth: 20, deckX: 0, deckZ: 0 }
   let motes: Points | undefined
   let seeds: Float32Array = new Float32Array(0)
+  let dice: Die[] = []
+  let stacks: Stack[] = []
+  let active: string | null = null
+  let pickables: Mesh[] = []
+  const dieRandom = seededRandom(hashString('dice'))
 
   const blob = (parent: Group, x: number, z: number, radius: number, opacity: number): void => {
     const material = new MeshBasicMaterial({
@@ -434,41 +562,176 @@ export function createDecor(scene: Scene, reducedMotion: boolean): Decor {
     parent: Group,
     x: number,
     z: number,
-    colour: string,
-    count: number,
-    seed: string,
+    category: { name: string; count: number },
   ): void => {
-    const { side, face } = chipTextures(colour)
-    const geometry = new CylinderGeometry(0.6, 0.6, 0.14, 32)
-    const materials = [
-      new MeshStandardMaterial({ map: side, roughness: 0.45 }),
-      new MeshStandardMaterial({ map: face, roughness: 0.45 }),
-      new MeshStandardMaterial({ map: face, roughness: 0.45 }),
-    ]
-    const random = seededRandom(hashString(seed))
+    const theme = CHIP_THEMES[category.name] ?? PLAIN_CHIP
+    const { side, face } = chipTextures(theme)
+    const geometry = new CylinderGeometry(0.6, 0.6, 0.14, 48)
+    const plastic = (map: CanvasTexture): MeshPhysicalMaterial =>
+      new MeshPhysicalMaterial({
+        map,
+        envMap: options.environment ?? null,
+        envMapIntensity: 0.5,
+        roughness: 0.4,
+        clearcoat: 0.6,
+        clearcoatRoughness: 0.3,
+      })
+    const materials = [plastic(side), plastic(face), plastic(face)]
+    const random = seededRandom(hashString(category.name))
+    const count = Math.min(10, Math.max(3, Math.ceil(category.count / 2)))
+    const ring = new Mesh(
+      new RingGeometry(0.8, 0.95, 48),
+      new MeshBasicMaterial({
+        color: 0xffd34d,
+        transparent: true,
+        opacity: 0.85,
+        depthWrite: false,
+        blending: AdditiveBlending,
+      }),
+    )
+    ring.rotation.x = -Math.PI / 2
+    ring.position.set(x, 0.02, z)
+    ring.visible = active === category.name
+    parent.add(ring)
+    const stack: Stack = { category: category.name, chips: [], topY: 0, hop: -1, ring }
     for (let i = 0; i < count; i++) {
       const chip = new Mesh(geometry, materials)
       chip.position.set(x + (random() - 0.5) * 0.06, 0.07 + i * 0.145, z + (random() - 0.5) * 0.06)
-      chip.rotation.y = random() * TAU
+      // The top chip faces the camera the right way up; the rest are scattered.
+      chip.rotation.y = i === count - 1 ? Math.PI / 2 : random() * TAU
+      chip.castShadow = true
+      chip.receiveShadow = true
+      chip.userData.stack = stack
       parent.add(chip)
+      stack.chips.push(chip)
+      pickables.push(chip)
     }
-    blob(parent, x + 0.2, z + 0.25, 1.1, 0.5)
+    stack.topY = 0.07 + (count - 1) * 0.145
+    stacks.push(stack)
+    blob(parent, x + 0.2, z + 0.25, 1.1, 0.35)
   }
 
   const die = (parent: Group, x: number, z: number, yaw: number): void => {
     const materials = [3, 4, 1, 6, 2, 5].map(
-      (pips) => new MeshStandardMaterial({ map: pipTexture(pips), roughness: 0.4 }),
+      (pips) =>
+        new MeshPhysicalMaterial({
+          map: pipTexture(pips),
+          envMap: options.environment ?? null,
+          envMapIntensity: 0.5,
+          roughness: 0.28,
+          clearcoat: 1,
+          clearcoatRoughness: 0.12,
+        }),
     )
-    const mesh = new Mesh(new BoxGeometry(0.95, 0.95, 0.95), materials)
-    mesh.position.set(x, 0.475, z)
+    const mesh = new Mesh(new RoundedBoxGeometry(DIE_SIZE, DIE_SIZE, DIE_SIZE, 4, 0.1), materials)
+    mesh.position.set(x, DIE_SIZE / 2, z)
     mesh.rotation.y = yaw
+    mesh.castShadow = true
+    mesh.receiveShadow = true
+    const record: Die = {
+      mesh,
+      homeX: x,
+      homeZ: z,
+      rolling: false,
+      clock: 0,
+      duration: ROLL_SECONDS,
+      value: 1,
+      fromX: x,
+      fromZ: z,
+      toX: x,
+      toZ: z,
+      from: new Quaternion(),
+      to: new Quaternion(),
+      axis: new Vector3(0, 1, 0),
+      turns: 2,
+    }
+    mesh.userData.die = record
+    dice.push(record)
+    pickables.push(mesh)
     parent.add(mesh)
-    blob(parent, x + 0.15, z + 0.2, 1.1, 0.5)
+    blob(parent, x + 0.15, z + 0.2, 1.1, 0.35)
+  }
+
+  const roll = (): void => {
+    if (dice.some((d) => d.rolling)) return
+    for (const d of dice) {
+      d.value = 1 + Math.floor(dieRandom() * 6)
+      const normal = DIE_FACES.find(([value]) => value === d.value)![1]
+      d.from.copy(d.mesh.quaternion)
+      d.to
+        .setFromUnitVectors(normal, UP)
+        .premultiply(new Quaternion().setFromAxisAngle(UP, dieRandom() * TAU))
+      d.fromX = d.mesh.position.x
+      d.fromZ = d.mesh.position.z
+      d.toX = d.homeX + (dieRandom() - 0.5) * 0.7
+      d.toZ = d.homeZ + (dieRandom() - 0.5) * 0.7
+      d.axis.set(dieRandom() - 0.5, dieRandom() - 0.5, dieRandom() - 0.5).normalize()
+      d.turns = 2 + Math.floor(dieRandom() * 2)
+      d.duration = ROLL_SECONDS + dieRandom() * 0.35
+      d.clock = 0
+      d.rolling = !reducedMotion
+      if (reducedMotion) {
+        d.mesh.quaternion.copy(d.to)
+        d.mesh.position.set(d.toX, DIE_SIZE / 2, d.toZ)
+      }
+    }
+    if (reducedMotion) options.onRoll(dice.map((d) => d.value))
+  }
+
+  const spin = new Quaternion()
+  const stepDice = (deltaSeconds: number): void => {
+    let finished = false
+    for (const d of dice) {
+      if (!d.rolling) continue
+      d.clock += deltaSeconds
+      const p = Math.min(1, d.clock / d.duration)
+      const e = easeOut(p)
+      d.mesh.position.set(
+        d.fromX + (d.toX - d.fromX) * e,
+        DIE_SIZE / 2 + 2.4 * (1 - p) ** 1.5 * Math.abs(Math.sin(p * Math.PI * 3)),
+        d.fromZ + (d.toZ - d.fromZ) * e,
+      )
+      d.mesh.quaternion.slerpQuaternions(d.from, d.to, e)
+      spin.setFromAxisAngle(d.axis, (1 - e) * d.turns * TAU)
+      d.mesh.quaternion.premultiply(spin)
+      if (p >= 1) {
+        d.rolling = false
+        finished = true
+      }
+    }
+    if (finished && dice.every((d) => !d.rolling)) options.onRoll(dice.map((d) => d.value))
+  }
+
+  const stepStacks = (deltaSeconds: number): void => {
+    for (const stack of stacks) {
+      if (stack.hop < 0) continue
+      stack.hop += deltaSeconds / HOP_SECONDS
+      const top = stack.chips[stack.chips.length - 1]
+      if (!top) continue
+      const p = Math.min(1, stack.hop)
+      top.position.y = stack.topY + Math.sin(p * Math.PI) * 2.2
+      top.rotation.x = easeOut(p) * TAU
+      if (p >= 1) {
+        stack.hop = -1
+        top.position.y = stack.topY
+        top.rotation.x = 0
+      }
+    }
+  }
+
+  const hit = (raycaster: Raycaster): { die?: Die; stack?: Stack } | null => {
+    const first = raycaster.intersectObjects(pickables, false)[0]
+    if (!first) return null
+    const data = first.object.userData as { die?: Die; stack?: Stack }
+    return data.die || data.stack ? data : null
   }
 
   const build = (area: TableArea): void => {
-    disposeTree(root)
+    disposeTree(root, options.environment)
     root.clear()
+    dice = []
+    stacks = []
+    pickables = []
     const group = new Group()
     root.add(group)
     const { centerX, centerZ, width, depth } = area
@@ -477,23 +740,43 @@ export function createDecor(scene: Scene, reducedMotion: boolean): Decor {
     const minZ = centerZ - depth / 2
     const maxZ = centerZ + depth / 2
 
+    const weave = grainTexture('felt-weave', 256, 60, 200)
+    weave.repeat.set(width / 1.6, depth / 1.6)
     const felt = new Mesh(
       new PlaneGeometry(width, depth),
-      new MeshBasicMaterial({ map: drawFelt(area) }),
+      new MeshStandardMaterial({
+        map: drawFelt(area),
+        bumpMap: weave,
+        bumpScale: 0.9,
+        roughness: 1,
+        metalness: 0,
+      }),
     )
     felt.rotation.x = -Math.PI / 2
     felt.position.set(centerX, -0.02, centerZ)
+    felt.receiveShadow = true
     group.add(felt)
 
+    const hide = grainTexture('leather', 128, 90, 200)
+    hide.repeat.set(width / 1.2, 1)
     const leather = new Mesh(
       ringGeometry(width + RAIL * 2, depth + RAIL * 2, width, depth, 2.6, {
         depth: 0.3,
         bevel: 0.6,
         thickness: 0.55,
       }),
-      new MeshStandardMaterial({ color: 0x5a1523, roughness: 0.5, metalness: 0.04 }),
+      new MeshStandardMaterial({
+        color: 0x6a1a2a,
+        envMap: options.environment ?? null,
+        envMapIntensity: 0.5,
+        roughness: 0.4,
+        bumpMap: hide,
+        bumpScale: 0.35,
+      }),
     )
     leather.position.set(centerX, 0.25, centerZ)
+    leather.castShadow = true
+    leather.receiveShadow = true
     group.add(leather)
 
     const wood = new Mesh(
@@ -505,12 +788,17 @@ export function createDecor(scene: Scene, reducedMotion: boolean): Decor {
         3.2,
         { depth: 0.2, bevel: 0.3, thickness: 0.3 },
       ),
-      new MeshStandardMaterial({ map: woodTexture(), roughness: 0.55 }),
+      new MeshStandardMaterial({
+        map: woodTexture(),
+        envMap: options.environment ?? null,
+        envMapIntensity: 0.5,
+        roughness: 0.4,
+      }),
     )
     wood.position.set(centerX, 0.05, centerZ)
+    wood.receiveShadow = true
     group.add(wood)
 
-    const shadowSize = Math.max(width, depth) + 14
     const shadow = new Mesh(
       new PlaneGeometry(width + 18, depth + 18),
       new MeshBasicMaterial({
@@ -523,23 +811,40 @@ export function createDecor(scene: Scene, reducedMotion: boolean): Decor {
     )
     shadow.rotation.x = -Math.PI / 2
     shadow.position.set(centerX, -1.4, centerZ)
-    shadow.scale.set(1, 1, 1)
-    void shadowSize
     group.add(shadow)
 
     const inset = TABLE_MARGIN - 0.8
-    chipStack(group, maxX - inset + 0.9, maxZ - inset + 0.4, '#b3202a', 8, 'red')
-    chipStack(group, maxX - inset - 0.5, maxZ - inset + 1.2, '#1f4fb5', 5, 'blue')
-    chipStack(group, maxX - inset + 1.1, maxZ - inset - 0.9, '#1d1b19', 4, 'black')
-    chipStack(group, minX + inset - 0.6, minZ + inset - 0.8, '#1f8f4e', 6, 'green')
-    chipStack(group, minX + inset + 0.6, minZ + inset - 1.3, '#f1ecdc', 3, 'white')
+    const corners = [
+      [maxX - inset + 0.9, maxZ - inset + 0.4],
+      [minX + inset - 0.6, minZ + inset - 0.8],
+    ] as const
+    options.categories.forEach((category, index) => {
+      const [corner, dx, dz] = STACK_SPOTS[index % STACK_SPOTS.length]!
+      const [cx, cz] = corners[corner]
+      chipStack(group, cx + dx, cz + dz, category)
+    })
     die(group, minX + inset - 0.5, maxZ - inset + 0.9, 0.5)
     die(group, minX + inset + 0.9, maxZ - inset + 0.3, 1.0)
 
-    group.add(new HemisphereLight(0xfff1dc, 0x3a2418, 1.5))
-    const key = new DirectionalLight(0xffe3b8, 2.6)
+    group.add(new HemisphereLight(0xfff6ea, 0x3a2418, 0.55))
+    const key = new DirectionalLight(0xffecd0, 1.5)
     key.position.set(centerX - 8, 22, centerZ + 12)
     key.target.position.set(centerX, 0, centerZ)
+    const reach = Math.hypot(width, depth) / 2 + 4
+    key.castShadow = options.shadows
+    const small = typeof matchMedia === 'function' && matchMedia('(max-width: 700px)').matches
+    key.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048)
+    Object.assign(key.shadow.camera, {
+      left: -reach,
+      right: reach,
+      top: reach,
+      bottom: -reach,
+      near: 1,
+      far: 70,
+    })
+    key.shadow.bias = -0.0004
+    key.shadow.normalBias = 0.03
+    key.shadow.radius = 3
     group.add(key, key.target)
 
     const positions = new Float32Array(MOTES * 3)
@@ -574,7 +879,35 @@ export function createDecor(scene: Scene, reducedMotion: boolean): Decor {
   let elapsed = 0
   return {
     rebuild: build,
+    hover(raycaster) {
+      const found = hit(raycaster)
+      if (found?.die) return 'Roll the dice'
+      if (found?.stack) return `${found.stack.category} chips: filter the cards`
+      return null
+    },
+    press(raycaster) {
+      const found = hit(raycaster)
+      if (found?.die) {
+        roll()
+        return true
+      }
+      if (found?.stack) {
+        if (!reducedMotion) found.stack.hop = 0
+        options.onChip(found.stack.category)
+        return true
+      }
+      return false
+    },
+    animating() {
+      return dice.some((d) => d.rolling) || stacks.some((stack) => stack.hop >= 0)
+    },
+    setActive(category) {
+      active = category
+      for (const stack of stacks) stack.ring.visible = stack.category === category
+    },
     update(deltaSeconds) {
+      stepDice(deltaSeconds)
+      stepStacks(deltaSeconds)
       if (reducedMotion || !motes) return
       elapsed += deltaSeconds
       const position = motes.geometry.getAttribute('position')
@@ -600,7 +933,7 @@ export function createDecor(scene: Scene, reducedMotion: boolean): Decor {
       return 1 - 0.3 * t * t * (3 - 2 * t)
     },
     dispose() {
-      disposeTree(root)
+      disposeTree(root, options.environment)
       root.removeFromParent()
     },
   }

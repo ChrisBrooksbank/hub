@@ -33,6 +33,7 @@ export function sitesPlugin(options: SitesPluginOptions): Plugin {
   const overridesPath = resolve(options.overridesPath)
   let outDir = ''
   let thumbsSrcDir = ''
+  let clipsSrcDir = ''
 
   const load = () =>
     resolveManifest(readRecords(generatedPath, false), readRecords(overridesPath, true))
@@ -42,6 +43,7 @@ export function sitesPlugin(options: SitesPluginOptions): Plugin {
     configResolved(config) {
       outDir = resolve(config.root, config.build.outDir)
       thumbsSrcDir = resolve(config.root, 'public', 'thumbs')
+      clipsSrcDir = resolve(config.root, 'public', 'clips')
     },
     resolveId(id) {
       return id === VIRTUAL_ID ? RESOLVED_ID : undefined
@@ -50,23 +52,33 @@ export function sitesPlugin(options: SitesPluginOptions): Plugin {
       if (id !== RESOLVED_ID) return undefined
       this.addWatchFile(generatedPath)
       if (existsSync(overridesPath)) this.addWatchFile(overridesPath)
-      const sites = load().visible.map((site) =>
-        !site.thumb && existsSync(join(thumbsSrcDir, `${site.id}.webp`))
-          ? { ...site, thumb: `/thumbs/${site.id}.webp` }
-          : site,
-      )
+      const sites = load().visible.map((site) => ({
+        ...site,
+        ...(!site.thumb && existsSync(join(thumbsSrcDir, `${site.id}.webp`))
+          ? { thumb: `/thumbs/${site.id}.webp` }
+          : {}),
+        ...(!site.clip && existsSync(join(clipsSrcDir, `${site.id}.mp4`))
+          ? { clip: `/clips/${site.id}.mp4` }
+          : {}),
+      }))
       return `export const sites = ${JSON.stringify(sites)}\n`
     },
     closeBundle() {
-      const thumbsDir = join(outDir, 'thumbs')
-      if (!existsSync(thumbsDir)) return
-      const names = new Set(
-        load().hidden.flatMap((site) => [site.id, site.thumb ? basename(site.thumb) : '']),
-      )
-      names.delete('')
-      for (const file of readdirSync(thumbsDir)) {
-        if (names.has(file) || names.has(basename(file, extname(file)))) {
-          rmSync(join(thumbsDir, file), { force: true })
+      const hidden = load().hidden
+      for (const [folder, field] of [
+        ['thumbs', 'thumb'],
+        ['clips', 'clip'],
+      ] as const) {
+        const dir = join(outDir, folder)
+        if (!existsSync(dir)) continue
+        const names = new Set(
+          hidden.flatMap((site) => [site.id, site[field] ? basename(site[field]) : '']),
+        )
+        names.delete('')
+        for (const file of readdirSync(dir)) {
+          if (names.has(file) || names.has(basename(file, extname(file)))) {
+            rmSync(join(dir, file), { force: true })
+          }
         }
       }
     },

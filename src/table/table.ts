@@ -1,11 +1,15 @@
 import {
   CanvasTexture,
+  ExtrudeGeometry,
   Group,
   MathUtils,
   Mesh,
   MeshBasicMaterial,
+  MeshStandardMaterial,
+  type MeshStandardMaterialParameters,
   PlaneGeometry,
   Raycaster,
+  Shape,
   SRGBColorSpace,
   Vector2,
 } from 'three'
@@ -13,6 +17,17 @@ import type { Site } from '../data/schema'
 import { SceneEngine } from '../engine/scene-engine'
 import { drawCardFace, FACE_HEIGHT, FACE_WIDTH } from './card-art'
 import { BACKS, drawCardBack, pickBack } from './card-backs'
+import { categoriesOf } from '../ui/filter'
+import {
+  clonePose,
+  distance,
+  flight,
+  planShuffle,
+  sampleSegment,
+  stackPoseAt,
+  type Pose,
+  type Segment,
+} from './choreography'
 import { createDecor } from './decor'
 import { drawJokerFace, isJoker, JOKERS, jokerVariant } from './jokers'
 import { PROFILE } from '../profile'
@@ -34,6 +49,8 @@ export interface TableOptions {
   favourites: ReadonlySet<string>
   /** Cards dealt at a time on a small screen; omit to deal everything. */
   handSize?: number
+  /** Called when a stack of chips on the rail is clicked. */
+  onChip: (category: string) => void
   /** Called with how many matching cards are still in the deck (to offer "deal more"). */
   onRemaining?: (remaining: number) => void
   /** Called when the visitor picks a card, or clicks the bare table (null). */
@@ -54,6 +71,8 @@ export interface Table {
   dealMore(): void
   /** Raises a card and centres the view on it; does not call `onSelect`. */
   select(id: string | null): void
+  /** Rings the chip stack of the category the cards are filtered to. */
+  setCategory(category: string | null): void
   /** Stars the given favourites on their faces. */
   setFavourites(ids: ReadonlySet<string>): void
   /** Gathers every card into the deck, then deals them out in a new order. */
@@ -61,21 +80,14 @@ export interface Table {
   dispose(): void
 }
 
-interface Pose {
-  x: number
-  y: number
-  z: number
-  yaw: number
-  /** 0 face up, π face down. */
-  flip: number
-  scale: number
-}
+type CardMaterial = MeshBasicMaterial | MeshStandardMaterial
 
 interface TableCard {
   site: Site
   root: Group
   face: Mesh
-  faceMaterial: MeshBasicMaterial
+  back: Mesh
+  faceMaterial: CardMaterial
   flipper: Group
   shadow: Mesh
   shadowMaterial: MeshBasicMaterial
@@ -84,23 +96,28 @@ interface TableCard {
   current: Pose
   /** Scene time before which the card holds still, so a deal ripples across the table. */
   startAt: number
+  /** Hand-made legs of travel; while any remain they replace the easing toward `target`. */
+  script: Segment[]
   /** A project with no live demo: drawn smaller, greyer and dimmer. */
   muted: boolean
   /** Brightness before the lamp falloff: dimmed when another card is selected. */
   bright: number
-  backMaterial: MeshBasicMaterial
-  /** Redraws the face (favourite star, loaded screenshot). */
+  backMaterial: CardMaterial
+  edgeMaterial: CardMaterial
+  edge: Mesh
+  /** Redraws the face (favourite star, loaded screenshot, clip frame). */
   repaint: () => void
+  /** Starts or stops showing a playing clip in the picture area. */
+  setLive: (video: HTMLVideoElement | undefined) => void
 }
 
 const PITCH = CAMERA_PITCH * (Math.PI / 180)
-const FLIP_LIFT = 1.4
+const FLIP_LIFT = 0.8
 const HOVER_LIFT = 0.8
 const HOVER_SCALE = 1.1
 const SELECT_LIFT = 2.6
 const SELECT_SCALE = 1.45
-const DECK_STEP = 0.045
-const DEAL_STAGGER = 0.045
+const DEAL_STAGGER = 0.06
 const SETTLE_RATE = 9
 const DIM = 0.55
 /** Felt shown beyond the outermost cards, so the rail and props frame them. */
@@ -114,7 +131,35 @@ const ZOOM_MAX = 1.5
 const lerp = (from: number, to: number, t: number): number => from + (to - from) * t
 
 function poseOf(x = 0, z = 0): Pose {
-  return { x, y: 0, z, yaw: 0, flip: Math.PI, scale: 1 }
+  return { x, y: 0, z, yaw: 0, flip: Math.PI, scale: 1, roll: 0 }
+}
+
+/** A card's thickness: face and back sit on either side of this, so a pack has no see-through gaps. */
+const CARD_THICKNESS = 0.034
+const CARD_CORNER = 0.17
+
+function edgeGeometry(): ExtrudeGeometry {
+  const w = CARD_WIDTH / 2 - 0.01
+  const h = CARD_HEIGHT / 2 - 0.01
+  const r = CARD_CORNER
+  const shape = new Shape()
+  shape.moveTo(-w + r, -h)
+  shape.lineTo(w - r, -h)
+  shape.absarc(w - r, -h + r, r, -Math.PI / 2, 0, false)
+  shape.lineTo(w, h - r)
+  shape.absarc(w - r, h - r, r, 0, Math.PI / 2, false)
+  shape.lineTo(-w + r, h)
+  shape.absarc(-w + r, h - r, r, Math.PI / 2, Math.PI, false)
+  shape.lineTo(-w, -h + r)
+  shape.absarc(-w + r, -h + r, r, Math.PI, Math.PI * 1.5, false)
+  const geometry = new ExtrudeGeometry(shape, {
+    depth: CARD_THICKNESS - 0.008,
+    bevelEnabled: false,
+    curveSegments: 6,
+  })
+  geometry.rotateX(-Math.PI / 2)
+  geometry.translate(0, -(CARD_THICKNESS - 0.008) / 2, 0)
+  return geometry
 }
 
 function canvasOf(width: number, height: number): HTMLCanvasElement {
@@ -150,7 +195,13 @@ export function createTable(options: TableOptions): Table {
   let limited = true
   let favourites = options.favourites
   const engine = new SceneEngine({ container: parent, background: '#0b0806' })
+  // Clips are motion and data: skip them for reduced-motion, data-saver and software-GL visitors.
+  const connection = (navigator as { connection?: { saveData?: boolean } }).connection
+  const clipsAllowed = !reducedMotion && connection?.saveData !== true && !engine.softwareRendering
   const { scene, camera } = engine
+  // Phones have the densest screens and the least GPU: draw them a little coarser.
+  if (matchMedia('(max-width: 700px)').matches)
+    engine.setPixelRatio(Math.min(devicePixelRatio, 1.5))
   const canvas = engine.domElement
   canvas.setAttribute('role', 'img')
   canvas.setAttribute(
@@ -159,9 +210,30 @@ export function createTable(options: TableOptions): Table {
   )
   canvas.classList.add('table-canvas')
 
-  const decor = createDecor(scene, reducedMotion)
+  const decor = createDecor(scene, reducedMotion, {
+    environment: engine.studioEnvironment(),
+    shadows: !engine.softwareRendering,
+    categories: categoriesOf(sites).map((name) => ({
+      name,
+      count: sites.filter((site) => site.url && site.category === name).length,
+    })),
+    onChip: options.onChip,
+    onRoll: (faces) => {
+      canvas.dataset.dice = faces.join('+')
+    },
+  })
 
   const cardGeometry = new PlaneGeometry(CARD_WIDTH, CARD_HEIGHT)
+  const slabGeometry = edgeGeometry()
+  // Lit paper normally; plain unlit paper where the "GPU" is the CPU.
+  const cardMaterial = (parameters: MeshStandardMaterialParameters): CardMaterial =>
+    engine.softwareRendering
+      ? new MeshBasicMaterial({
+          map: parameters.map,
+          alphaTest: parameters.alphaTest,
+          color: parameters.color,
+        })
+      : new MeshStandardMaterial(parameters)
   const shadowGeometry = new PlaneGeometry(CARD_WIDTH * 1.18, CARD_HEIGHT * 1.14)
   const shadowMap = shadowTexture()
   const backCanvas = canvasOf(FACE_WIDTH, FACE_HEIGHT)
@@ -177,10 +249,14 @@ export function createTable(options: TableOptions): Table {
   for (const site of entries) {
     const faceCanvas = canvasOf(FACE_WIDTH, FACE_HEIGHT)
     let image: HTMLImageElement | undefined
+    let live: HTMLVideoElement | undefined
     const muted = !site.url && !isJoker(site.id)
     const paint = (): void => {
       if (isJoker(site.id)) drawJokerFace(faceCanvas, jokerVariant(site.id), portrait.image)
-      else drawCardFace(faceCanvas, site, image, favourites.has(site.id), muted)
+      else {
+        const playable = Boolean(site.clip) && clipsAllowed
+        drawCardFace(faceCanvas, site, image, favourites.has(site.id), muted, live, playable)
+      }
     }
     const repaint = (): void => {
       paint()
@@ -188,14 +264,20 @@ export function createTable(options: TableOptions): Table {
     }
     paint()
     const faceMap = textureOf(faceCanvas)
-    const faceMaterial = new MeshBasicMaterial({ map: faceMap, alphaTest: 0.5 })
+    const faceMaterial = cardMaterial({ map: faceMap, alphaTest: 0.5, roughness: 0.55 })
     const face = new Mesh(cardGeometry, faceMaterial)
     face.rotation.x = -Math.PI / 2
-    const backMaterial = new MeshBasicMaterial({ map: backMap, alphaTest: 0.5 })
+    const backMaterial = cardMaterial({ map: backMap, alphaTest: 0.5, roughness: 0.5 })
     const back = new Mesh(cardGeometry, backMaterial)
     back.rotation.x = Math.PI / 2
+    // Turned half a revolution in its own plane, so the design reads upright to the dealer.
+    back.rotation.z = Math.PI
     const flipper = new Group()
-    flipper.add(face, back)
+    face.position.y = CARD_THICKNESS / 2
+    back.position.y = -CARD_THICKNESS / 2
+    const edgeMaterial = cardMaterial({ color: 0xe6dfcf, roughness: 0.8 })
+    const edge = new Mesh(slabGeometry, edgeMaterial)
+    flipper.add(face, back, edge)
     const root = new Group()
     root.add(flipper)
     const shadowMaterial = new MeshBasicMaterial({
@@ -212,6 +294,7 @@ export function createTable(options: TableOptions): Table {
       site,
       root,
       face,
+      back,
       faceMaterial,
       flipper,
       shadow,
@@ -220,10 +303,17 @@ export function createTable(options: TableOptions): Table {
       target: poseOf(),
       current: poseOf(),
       startAt: 0,
+      script: [],
       muted,
       bright: 1,
       backMaterial,
+      edgeMaterial,
+      edge,
       repaint,
+      setLive: (video) => {
+        live = video
+        repaint()
+      },
     })
     if (site.thumb && site.thumbMode !== 'generated') {
       const loading = new Image()
@@ -267,6 +357,7 @@ export function createTable(options: TableOptions): Table {
   let fit = 20
   let lastAspect = 0
   let decorKey = ''
+  let deck = { x: 0, z: 0 }
 
   const slotFor = (slot: Slot): Pose => ({
     x: slot.x,
@@ -275,6 +366,7 @@ export function createTable(options: TableOptions): Table {
     yaw: slot.yaw,
     flip: 0,
     scale: 1,
+    roll: 0,
   })
 
   const arrange = (stagger: boolean): void => {
@@ -290,6 +382,7 @@ export function createTable(options: TableOptions): Table {
     if (decorKey !== key) {
       decorKey = key
       decor.rebuild(area)
+      engine.requestShadowUpdate()
     }
     options.onRemaining?.(matches.length - capacity)
     const { deckX, deckZ } = area
@@ -308,29 +401,29 @@ export function createTable(options: TableOptions): Table {
     bounds.width = maxX - minX + CAMERA_MARGIN * 2
     bounds.depth = maxZ - minZ + CAMERA_MARGIN * 2
 
-    let deckIndex = 0
+    const deckCards = order.filter((id) => !shown.includes(id))
+    deck = { x: deckX, z: deckZ }
     let dealIndex = 0
     for (const id of order) {
       const card = cards.get(id)
       if (!card) continue
       const slotIndex = shown.indexOf(id)
+      let delay: number
       if (slotIndex >= 0) {
         const slot = spread.slots[slotIndex]
         card.base = slot ? slotFor(slot) : poseOf()
         if (card.muted) card.base.scale = MUTED_SCALE
-        card.startAt = stagger && !reducedMotion ? clock + dealIndex++ * DEAL_STAGGER : 0
+        // `order` runs from the top of the deck down, so cards are dealt off the top.
+        delay = dealIndex++ * DEAL_STAGGER
       } else {
-        const jitter = ((deckIndex * 7919) % 13) / 13 - 0.5
-        card.base = {
-          x: deckX + jitter * 0.12,
-          y: deckIndex * DECK_STEP,
-          z: deckZ - jitter * 0.1,
-          yaw: jitter * 0.12,
-          flip: Math.PI,
-          scale: 1,
-        }
-        card.startAt = stagger && !reducedMotion ? clock + deckIndex * 0.012 : 0
-        deckIndex++
+        // The deck is stacked top-first: the first card in `order` is the one on top.
+        const rank = deckCards.indexOf(id)
+        card.base = stackPoseAt(deckCards.length - 1 - rank, deckX, deckZ)
+        delay = (deckCards.length - 1 - rank) * 0.012
+      }
+      card.startAt = 0
+      if (stagger && !reducedMotion && distance(card.current, card.base) > 0.05) {
+        card.script = [flight(card.current, card.base, clock + delay, dealIndex + delay * 100)]
       }
     }
     refreshTargets()
@@ -347,7 +440,37 @@ export function createTable(options: TableOptions): Table {
     applyViewTarget()
   }
 
+  // The card that is picked (or hovered) plays its README clip in place of the screenshot.
+  const clips = new Map<string, HTMLVideoElement>()
+  let clipId: string | null = null
+  let clipPaintedAt = 0
+  const setClip = (id: string | null): void => {
+    if (id === clipId) return
+    if (clipId) {
+      clips.get(clipId)?.pause()
+      cards.get(clipId)?.setLive(undefined)
+    }
+    clipId = id
+    const card = id ? cards.get(id) : undefined
+    if (!id || !card?.site.clip) return
+    let video = clips.get(id)
+    if (!video) {
+      video = document.createElement('video')
+      video.muted = true
+      video.loop = true
+      video.playsInline = true
+      video.preload = 'auto'
+      video.src = card.site.clip
+      clips.set(id, video)
+    }
+    card.setLive(video)
+    void video.play().catch(() => undefined)
+  }
+
   const refreshTargets = (): void => {
+    const wanted = clipsAllowed ? (selectedId ?? hoverId) : null
+    const wantedCard = wanted ? cards.get(wanted) : undefined
+    setClip(wantedCard?.site.clip && wantedCard.base.flip === 0 ? wanted : null)
     for (const [id, card] of cards) {
       const lifted = id === selectedId ? SELECT_LIFT : id === hoverId ? HOVER_LIFT : 0
       const scale = id === selectedId ? SELECT_SCALE : id === hoverId ? HOVER_SCALE : 1
@@ -384,7 +507,20 @@ export function createTable(options: TableOptions): Table {
     camera.lookAt(view.x, 0, view.z)
   }
 
-  const settle = (delta: number): void => {
+  /** Advances a card along its hand-made legs, dropping each as it lands. */
+  const stepScript = (card: TableCard): void => {
+    while (card.script.length > 1) {
+      const first = card.script[0]!
+      if (clock < first.start + first.dur) break
+      card.script.shift()
+    }
+    const leg = card.script[0]!
+    if (sampleSegment(leg, clock, card.current)) card.script.shift()
+  }
+
+  /** Moves everything toward its target; true while anything is still travelling. */
+  const settle = (delta: number): boolean => {
+    let moving = false
     const t = reducedMotion ? 1 : 1 - Math.exp(-SETTLE_RATE * delta)
     view.x = lerp(view.x, viewTarget.x, t)
     view.z = lerp(view.z, viewTarget.z, t)
@@ -392,18 +528,40 @@ export function createTable(options: TableOptions): Table {
     for (const card of cards.values()) {
       if (clock < card.startAt) continue
       const { current, target } = card
-      current.x = lerp(current.x, target.x, t)
-      current.y = lerp(current.y, target.y, t)
-      current.z = lerp(current.z, target.z, t)
-      current.yaw = lerp(current.yaw, target.yaw, t)
-      current.flip = lerp(current.flip, target.flip, t)
-      current.scale = lerp(current.scale, target.scale, t)
+      if (card.script.length > 0) {
+        moving = true
+        stepScript(card)
+      } else if (
+        Math.abs(target.x - current.x) +
+          Math.abs(target.y - current.y) +
+          Math.abs(target.z - current.z) +
+          Math.abs(target.flip - current.flip) +
+          Math.abs(target.scale - current.scale) >
+        0.002
+      ) {
+        moving = true
+      }
+      if (card.script.length === 0) {
+        current.x = lerp(current.x, target.x, t)
+        current.y = lerp(current.y, target.y, t)
+        current.z = lerp(current.z, target.z, t)
+        current.yaw = lerp(current.yaw, target.yaw, t)
+        current.flip = lerp(current.flip, target.flip, t)
+        current.scale = lerp(current.scale, target.scale, t)
+        current.roll = lerp(current.roll, target.roll, t)
+      }
       const lift = current.y + Math.sin(current.flip) * FLIP_LIFT
       card.root.position.set(current.x, lift, current.z)
+      const airborne = lift > 0.4
+      card.face.castShadow = airborne
+      card.back.castShadow = airborne
+      card.edge.castShadow = airborne
       const light = card.bright * decor.lamp(current.x, current.z)
       card.faceMaterial.color.setScalar(light)
       card.backMaterial.color.setScalar(light)
+      card.edgeMaterial.color.setScalar(light * 0.9)
       card.root.rotation.y = current.yaw
+      card.root.rotation.z = current.roll
       card.root.scale.setScalar(current.scale)
       card.flipper.rotation.z = current.flip
       card.shadow.position.set(current.x + lift * 0.3, -0.005, current.z + lift * 0.45)
@@ -411,11 +569,12 @@ export function createTable(options: TableOptions): Table {
       card.shadow.scale.setScalar(current.scale)
       card.shadowMaterial.opacity = Math.max(0.12, 0.5 - lift * 0.07)
     }
+    return moving
   }
 
   const raycaster = new Raycaster()
   const pointer = new Vector2()
-  const pick = (clientX: number, clientY: number): string | null => {
+  const aim = (clientX: number, clientY: number): void => {
     const rect = canvas.getBoundingClientRect()
     pointer.set(
       ((clientX - rect.left) / rect.width) * 2 - 1,
@@ -423,6 +582,9 @@ export function createTable(options: TableOptions): Table {
     )
     scene.updateMatrixWorld()
     raycaster.setFromCamera(pointer, camera)
+  }
+  const pick = (clientX: number, clientY: number): string | null => {
+    aim(clientX, clientY)
     const hits = raycaster.intersectObjects(
       [...cards.values()].filter((c) => !gathered && matching.has(c.site.id)).map((c) => c.face),
       false,
@@ -438,6 +600,16 @@ export function createTable(options: TableOptions): Table {
     hoverId = id
     canvas.style.cursor = id ? 'pointer' : 'grab'
     refreshTargets()
+  }
+
+  /** Hover over the cards first, then the dice and chips on the rail. */
+  const hoverAt = (clientX: number, clientY: number): void => {
+    const id = pick(clientX, clientY)
+    setHover(id)
+    const tip = id ? null : decor.hover(raycaster)
+    canvas.style.cursor = id || tip ? 'pointer' : 'grab'
+    if (tip) canvas.title = tip
+    else canvas.removeAttribute('title')
   }
 
   const pointers = new Map<number, { x: number; y: number }>()
@@ -466,7 +638,7 @@ export function createTable(options: TableOptions): Table {
   const onPointerMove = (event: PointerEvent): void => {
     const previous = pointers.get(event.pointerId)
     if (!previous) {
-      if (event.pointerType === 'mouse') setHover(pick(event.clientX, event.clientY))
+      if (event.pointerType === 'mouse') hoverAt(event.clientX, event.clientY)
       return
     }
     if (pointers.size >= 2) {
@@ -504,6 +676,12 @@ export function createTable(options: TableOptions): Table {
     if (pointers.size > 0) return
     if (!dragged) {
       const id = pick(event.clientX, event.clientY)
+      // The dice and chips sit on the rail: a click there plays with them, not the cards.
+      if (id === null && decor.press(raycaster)) {
+        dragged = false
+        pinchDistance = 0
+        return
+      }
       setSelected(id)
       onSelect(id)
     }
@@ -560,8 +738,13 @@ export function createTable(options: TableOptions): Table {
 
   engine.onFrame((delta) => {
     clock += delta
-    settle(delta)
+    if (clipId && clock - clipPaintedAt > 1 / 15) {
+      clipPaintedAt = clock
+      cards.get(clipId)?.repaint()
+    }
+    const moving = settle(delta)
     decor.update(delta)
+    if (moving || decor.animating()) engine.requestShadowUpdate()
     placeCamera()
   })
 
@@ -592,6 +775,9 @@ export function createTable(options: TableOptions): Table {
       limit += handSize
       arrange(true)
     },
+    setCategory(category) {
+      decor.setActive(category)
+    },
     setFavourites(ids) {
       favourites = ids
       for (const card of cards.values()) card.repaint()
@@ -599,21 +785,59 @@ export function createTable(options: TableOptions): Table {
     shuffle() {
       clearTimeout(dealTimer)
       selectedId = null
+      hoverId = null
+      limit = handSize
       backDesign = pickBack(Math.random(), backDesign.id)
-      drawCardBack(backCanvas, backDesign)
-      backMap.needsUpdate = true
-      canvas.dataset.back = backDesign.id
       gathered = true
       markDealt()
-      arrange(true)
-      order = [...order].sort(() => Math.random() - 0.5)
-      limit = handSize
-      dealTimer = setTimeout(deal, reducedMotion ? 0 : 750)
+      if (reducedMotion) {
+        drawCardBack(backCanvas, backDesign)
+        backMap.needsUpdate = true
+        canvas.dataset.back = backDesign.id
+        arrange(true)
+        order = [...order].sort(() => Math.random() - 0.5)
+        dealTimer = setTimeout(deal, 0)
+        return
+      }
+      pan = { x: 0, z: 0 }
+      zoom = 1
+      arrange(false)
+      // Everything is gathered and riffled in the middle of the table, where the cards were.
+      const plan = planShuffle({
+        stack: [...order].reverse(),
+        current: new Map([...cards].map(([id, card]) => [id, clonePose(card.current)])),
+        deck,
+        center: { x: bounds.centerX, z: bounds.centerZ },
+        start: clock + 0.05,
+        random: Math.random,
+      })
+      for (const [id, legs] of plan.scripts) {
+        const card = cards.get(id)
+        if (card) card.script = legs
+      }
+      order = [...plan.stack].reverse()
+      arrange(false)
+      // The deck is face down throughout, so the new back design is swapped in unseen.
+      dealTimer = setTimeout(
+        () => {
+          drawCardBack(backCanvas, backDesign)
+          backMap.needsUpdate = true
+          canvas.dataset.back = backDesign.id
+          deal()
+        },
+        Math.max(0, (plan.end - clock) * 1000) + 250,
+      )
     },
     dispose() {
       if (disposed) return
       disposed = true
       clearTimeout(dealTimer)
+      for (const video of clips.values()) {
+        video.pause()
+        video.removeAttribute('src')
+        video.load()
+      }
+      clips.clear()
       observer?.disconnect()
       canvas.removeEventListener('pointerdown', onPointerDown)
       canvas.removeEventListener('pointermove', onPointerMove)

@@ -24,6 +24,8 @@ export const SiteSchema = z.object({
   lastPushed: z.string().nullable(),
   status: z.enum(['live', 'dead']).default('live'),
   thumb: z.string().optional(),
+  /** A short looping video (from the repo's README GIF), played on the card when picked. */
+  clip: z.string().optional(),
   thumbMode: z.enum(['screenshot', 'generated']).optional(),
   shotWaitFor: z.string().optional(),
   shotClick: z.string().optional(),

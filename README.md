@@ -29,7 +29,7 @@ The list of sites comes from two JSON files in `data/`:
 - `data/sites.generated.json` is rebuilt by the scan (`npm run sites:scan`) from local repos, GitHub and Netlify. Do not edit it by hand.
 - `data/sites.overrides.json` is hand-edited and always wins over generated data.
 
-Thumbnails are captured with `npm run sites:shots` into `public/thumbs/`.
+Thumbnails are captured with `npm run sites:shots` into `public/thumbs/`. Cards play a short clip when picked: `npm run sites:clips` converts each repo's README GIF into `public/clips/` (needs `gh` and `ffmpeg`).
 
 The scan and shots scripts are planned but not built yet. See `IMPLEMENTATION_PLAN.md`.
 

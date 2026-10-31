@@ -27,6 +27,8 @@ self.addEventListener('fetch', (event) => {
   if (request.method !== 'GET') return
   const url = new URL(request.url)
   if (url.origin !== self.location.origin) return
+  // Video is fetched in ranges, which the cache cannot store; let the network serve it.
+  if (url.pathname.startsWith('/clips/')) return
 
   if (request.mode === 'navigate') {
     // Network first so a deploy shows up at once; the cached shell is the offline fallback.
