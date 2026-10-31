@@ -25,7 +25,7 @@ export interface Segment {
   ease: 'inOut' | 'out'
 }
 
-export const DECK_STEP = 0.045
+export const DECK_STEP = 0.036
 const PILE_GAP = 2.95
 const PILE_ROLL = 0.13
 const DROP_STAGGER = 0.024
