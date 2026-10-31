@@ -6,6 +6,7 @@ import {
   Mesh,
   MeshBasicMaterial,
   MeshStandardMaterial,
+  type MeshStandardMaterialParameters,
   PlaneGeometry,
   Raycaster,
   Shape,
@@ -79,12 +80,14 @@ export interface Table {
   dispose(): void
 }
 
+type CardMaterial = MeshBasicMaterial | MeshStandardMaterial
+
 interface TableCard {
   site: Site
   root: Group
   face: Mesh
   back: Mesh
-  faceMaterial: MeshStandardMaterial
+  faceMaterial: CardMaterial
   flipper: Group
   shadow: Mesh
   shadowMaterial: MeshBasicMaterial
@@ -99,8 +102,8 @@ interface TableCard {
   muted: boolean
   /** Brightness before the lamp falloff: dimmed when another card is selected. */
   bright: number
-  backMaterial: MeshStandardMaterial
-  edgeMaterial: MeshStandardMaterial
+  backMaterial: CardMaterial
+  edgeMaterial: CardMaterial
   edge: Mesh
   /** Redraws the face (favourite star, loaded screenshot, clip frame). */
   repaint: () => void
@@ -191,10 +194,10 @@ export function createTable(options: TableOptions): Table {
   let limit = handSize
   let limited = true
   let favourites = options.favourites
-  // Clips are motion and data: skip them for reduced-motion and data-saver visitors.
-  const connection = (navigator as { connection?: { saveData?: boolean } }).connection
-  const clipsAllowed = !reducedMotion && connection?.saveData !== true
   const engine = new SceneEngine({ container: parent, background: '#0b0806' })
+  // Clips are motion and data: skip them for reduced-motion, data-saver and software-GL visitors.
+  const connection = (navigator as { connection?: { saveData?: boolean } }).connection
+  const clipsAllowed = !reducedMotion && connection?.saveData !== true && !engine.softwareRendering
   const { scene, camera } = engine
   // Phones have the densest screens and the least GPU: draw them a little coarser.
   if (matchMedia('(max-width: 700px)').matches)
@@ -209,6 +212,7 @@ export function createTable(options: TableOptions): Table {
 
   const decor = createDecor(scene, reducedMotion, {
     environment: engine.studioEnvironment(),
+    shadows: !engine.softwareRendering,
     categories: categoriesOf(sites).map((name) => ({
       name,
       count: sites.filter((site) => site.url && site.category === name).length,
@@ -221,6 +225,15 @@ export function createTable(options: TableOptions): Table {
 
   const cardGeometry = new PlaneGeometry(CARD_WIDTH, CARD_HEIGHT)
   const slabGeometry = edgeGeometry()
+  // Lit paper normally; plain unlit paper where the "GPU" is the CPU.
+  const cardMaterial = (parameters: MeshStandardMaterialParameters): CardMaterial =>
+    engine.softwareRendering
+      ? new MeshBasicMaterial({
+          map: parameters.map,
+          alphaTest: parameters.alphaTest,
+          color: parameters.color,
+        })
+      : new MeshStandardMaterial(parameters)
   const shadowGeometry = new PlaneGeometry(CARD_WIDTH * 1.18, CARD_HEIGHT * 1.14)
   const shadowMap = shadowTexture()
   const backCanvas = canvasOf(FACE_WIDTH, FACE_HEIGHT)
@@ -251,18 +264,10 @@ export function createTable(options: TableOptions): Table {
     }
     paint()
     const faceMap = textureOf(faceCanvas)
-    const faceMaterial = new MeshStandardMaterial({
-      map: faceMap,
-      alphaTest: 0.5,
-      roughness: 0.55,
-    })
+    const faceMaterial = cardMaterial({ map: faceMap, alphaTest: 0.5, roughness: 0.55 })
     const face = new Mesh(cardGeometry, faceMaterial)
     face.rotation.x = -Math.PI / 2
-    const backMaterial = new MeshStandardMaterial({
-      map: backMap,
-      alphaTest: 0.5,
-      roughness: 0.5,
-    })
+    const backMaterial = cardMaterial({ map: backMap, alphaTest: 0.5, roughness: 0.5 })
     const back = new Mesh(cardGeometry, backMaterial)
     back.rotation.x = Math.PI / 2
     // Turned half a revolution in its own plane, so the design reads upright to the dealer.
@@ -270,7 +275,7 @@ export function createTable(options: TableOptions): Table {
     const flipper = new Group()
     face.position.y = CARD_THICKNESS / 2
     back.position.y = -CARD_THICKNESS / 2
-    const edgeMaterial = new MeshStandardMaterial({ color: 0xe6dfcf, roughness: 0.8 })
+    const edgeMaterial = cardMaterial({ color: 0xe6dfcf, roughness: 0.8 })
     const edge = new Mesh(slabGeometry, edgeMaterial)
     flipper.add(face, back, edge)
     const root = new Group()

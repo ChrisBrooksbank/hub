@@ -50,6 +50,14 @@ export function disposeObject(root: Object3D): void {
   })
 }
 
+function detectSoftwareRendering(renderer: EngineRenderer): boolean {
+  if (!(renderer instanceof WebGLRenderer)) return false
+  const gl = renderer.getContext()
+  const info = gl.getExtension('WEBGL_debug_renderer_info')
+  const name = info ? String(gl.getParameter(info.UNMASKED_RENDERER_WEBGL)) : ''
+  return /swiftshader|llvmpipe|software/i.test(name)
+}
+
 export class SceneEngine {
   readonly scene = new Scene()
   readonly camera = new PerspectiveCamera(50, 1, 0.1, 200)
@@ -65,14 +73,19 @@ export class SceneEngine {
   private disposed = false
   private shadowsDirty = true
   private environment: Texture | undefined
+  /** True when the GPU is really the CPU (SwiftShader, llvmpipe): skip the expensive effects. */
+  readonly softwareRendering: boolean
 
   constructor(options: SceneEngineOptions) {
     this.container = options.container
     this.renderer = options.createRenderer?.() ?? this.createDefaultRenderer()
-    this.pixelRatio = Math.min(
-      options.pixelRatio ?? globalThis.devicePixelRatio ?? 1,
-      MAX_PIXEL_RATIO,
-    )
+    this.softwareRendering = detectSoftwareRendering(this.renderer)
+    if (this.softwareRendering && this.renderer instanceof WebGLRenderer) {
+      this.renderer.shadowMap.enabled = false
+    }
+    this.pixelRatio = this.softwareRendering
+      ? 1
+      : Math.min(options.pixelRatio ?? globalThis.devicePixelRatio ?? 1, MAX_PIXEL_RATIO)
     this.renderer.setPixelRatio(this.pixelRatio)
     this.camera.position.set(0, 0, 12)
 
@@ -98,7 +111,7 @@ export class SceneEngine {
   }
 
   setPixelRatio(ratio: number): void {
-    this.pixelRatio = Math.min(ratio, MAX_PIXEL_RATIO)
+    this.pixelRatio = this.softwareRendering ? 1 : Math.min(ratio, MAX_PIXEL_RATIO)
     this.renderer.setPixelRatio(this.pixelRatio)
     this.resize()
   }
@@ -162,7 +175,7 @@ export class SceneEngine {
    * scene, which keeps the matte ones cheap). Undefined with a mock renderer.
    */
   studioEnvironment(): Texture | undefined {
-    if (!(this.renderer instanceof WebGLRenderer)) return undefined
+    if (!(this.renderer instanceof WebGLRenderer) || this.softwareRendering) return undefined
     if (this.environment) return this.environment
     const generator = new PMREMGenerator(this.renderer)
     const room = new RoomEnvironment()

@@ -43,6 +43,8 @@ const GOLD = '#e0bb68'
 export interface DecorOptions {
   /** What the glossy props (chips, dice, rail) reflect. */
   environment?: Texture
+  /** Cast real shadows; off on software rendering. */
+  shadows: boolean
 
   /** One themed stack of chips per category, in order. */
   categories: readonly { name: string; count: number }[]
@@ -568,7 +570,7 @@ export function createDecor(scene: Scene, reducedMotion: boolean, options: Decor
     const plastic = (map: CanvasTexture): MeshPhysicalMaterial =>
       new MeshPhysicalMaterial({
         map,
-        envMap: options.environment,
+        envMap: options.environment ?? null,
         envMapIntensity: 0.5,
         roughness: 0.4,
         clearcoat: 0.6,
@@ -614,7 +616,7 @@ export function createDecor(scene: Scene, reducedMotion: boolean, options: Decor
       (pips) =>
         new MeshPhysicalMaterial({
           map: pipTexture(pips),
-          envMap: options.environment,
+          envMap: options.environment ?? null,
           envMapIntensity: 0.5,
           roughness: 0.28,
           clearcoat: 1,
@@ -765,7 +767,7 @@ export function createDecor(scene: Scene, reducedMotion: boolean, options: Decor
       }),
       new MeshStandardMaterial({
         color: 0x6a1a2a,
-        envMap: options.environment,
+        envMap: options.environment ?? null,
         envMapIntensity: 0.5,
         roughness: 0.4,
         bumpMap: hide,
@@ -788,7 +790,7 @@ export function createDecor(scene: Scene, reducedMotion: boolean, options: Decor
       ),
       new MeshStandardMaterial({
         map: woodTexture(),
-        envMap: options.environment,
+        envMap: options.environment ?? null,
         envMapIntensity: 0.5,
         roughness: 0.4,
       }),
@@ -829,7 +831,7 @@ export function createDecor(scene: Scene, reducedMotion: boolean, options: Decor
     key.position.set(centerX - 8, 22, centerZ + 12)
     key.target.position.set(centerX, 0, centerZ)
     const reach = Math.hypot(width, depth) / 2 + 4
-    key.castShadow = true
+    key.castShadow = options.shadows
     const small = typeof matchMedia === 'function' && matchMedia('(max-width: 700px)').matches
     key.shadow.mapSize.set(small ? 1024 : 2048, small ? 1024 : 2048)
     Object.assign(key.shadow.camera, {
