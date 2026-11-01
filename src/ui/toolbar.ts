@@ -30,6 +30,9 @@ function el<K extends keyof HTMLElementTagNameMap>(
   return node
 }
 
+/** Categories shown as chips; the rest, and the two toggles, live behind "More". */
+const INLINE_CATEGORIES = 4
+
 /** The one control bar shared by the cards and list views: title, search, categories, view. */
 export function createToolbar(options: ToolbarOptions): Toolbar {
   const { store, sites, favourites, onView, onShuffle } = options
@@ -50,11 +53,20 @@ export function createToolbar(options: ToolbarOptions): Toolbar {
   const chips = el('div', { className: 'chips', role: 'group' })
   chips.setAttribute('aria-label', 'Filter by category')
   const chipButtons = new Map<string | null, HTMLButtonElement>()
-  for (const category of [null, ...categoriesOf(sites)]) {
+  const allCategories = categoriesOf(sites)
+  const inlineCategories = allCategories.slice(0, INLINE_CATEGORIES)
+  const hiddenCategories = allCategories.slice(INLINE_CATEGORIES)
+  const morePanel = el('div', { className: 'more-panel', id: 'more-panel' })
+  morePanel.hidden = true
+  for (const category of [null, ...allCategories]) {
     const button = el('button', { type: 'button', textContent: category ?? 'All' })
-    button.addEventListener('click', () => store.setFilter({ category }))
+    button.addEventListener('click', () => {
+      store.setFilter({ category })
+      closeMore()
+    })
     chipButtons.set(category, button)
-    chips.append(button)
+    if (category === null || inlineCategories.includes(category)) chips.append(button)
+    else morePanel.append(button)
   }
 
   const favouritesToggle = el('button', { type: 'button', className: 'fav-filter' })
@@ -84,7 +96,46 @@ export function createToolbar(options: ToolbarOptions): Toolbar {
     toggle.append(button)
   }
 
-  chips.append(favouritesToggle, demoToggle)
+  morePanel.append(favouritesToggle, demoToggle)
+  const moreButton = el('button', { type: 'button', className: 'more-button' })
+  moreButton.setAttribute('aria-haspopup', 'true')
+  moreButton.setAttribute('aria-controls', morePanel.id)
+  moreButton.setAttribute('aria-expanded', 'false')
+  chips.append(moreButton, morePanel)
+
+  function closeMore(returnFocus = false): void {
+    if (morePanel.hidden) return
+    morePanel.hidden = true
+    moreButton.setAttribute('aria-expanded', 'false')
+    if (returnFocus) moreButton.focus()
+  }
+  function openMore(): void {
+    // The panel is position: fixed so the scrolling chip row on phones cannot clip it.
+    const rect = moreButton.getBoundingClientRect()
+    morePanel.hidden = false
+    const width = morePanel.offsetWidth
+    const left = Math.max(8, Math.min(rect.left, window.innerWidth - width - 8))
+    morePanel.style.left = `${left}px`
+    morePanel.style.top = `${rect.bottom + 6}px`
+    moreButton.setAttribute('aria-expanded', 'true')
+  }
+  moreButton.addEventListener('click', () => (morePanel.hidden ? openMore() : closeMore()))
+  const onPointerDown = (event: PointerEvent): void => {
+    if (
+      event.target instanceof Node &&
+      !morePanel.contains(event.target) &&
+      event.target !== moreButton
+    )
+      closeMore()
+  }
+  const onKeyDown = (event: KeyboardEvent): void => {
+    if (event.key === 'Escape') closeMore(true)
+  }
+  const onViewportChange = (): void => closeMore()
+  document.addEventListener('pointerdown', onPointerDown)
+  document.addEventListener('keydown', onKeyDown)
+  window.addEventListener('resize', onViewportChange)
+  window.addEventListener('scroll', onViewportChange, true)
 
   const count = el('span', { className: 'count' })
 
@@ -113,6 +164,15 @@ export function createToolbar(options: ToolbarOptions): Toolbar {
     demoToggle.hidden = noDemoCount === 0
     favouritesToggle.setAttribute('aria-pressed', String(filter.favouritesOnly))
     favouritesToggle.textContent = `★ Favourites (${favourites.ids().size})`
+    // Say so on the button when a filter is active inside the menu.
+    const hiddenCategory =
+      filter.category !== null && hiddenCategories.includes(filter.category)
+        ? filter.category
+        : null
+    const inMenuActive =
+      hiddenCategory !== null || filter.favouritesOnly || Boolean(filter.withoutDemo)
+    moreButton.textContent = `${hiddenCategory ?? 'More'} ▾`
+    moreButton.setAttribute('aria-pressed', String(inMenuActive))
   }
   sync()
   const unsubscribe = store.subscribe(sync)
@@ -130,6 +190,10 @@ export function createToolbar(options: ToolbarOptions): Toolbar {
     element,
     setView,
     dispose: () => {
+      document.removeEventListener('pointerdown', onPointerDown)
+      document.removeEventListener('keydown', onKeyDown)
+      window.removeEventListener('resize', onViewportChange)
+      window.removeEventListener('scroll', onViewportChange, true)
       unsubscribe()
       unsubscribeFavourites()
       element.remove()
