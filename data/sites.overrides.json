@@ -300,5 +300,16 @@
     "isPrivateRepo": false,
     "lastPushed": "2026-06-18T20:25:58Z",
     "status": "live"
+  },
+  {
+    "id": "prep",
+    "name": "Ready",
+    "repo": "prep",
+    "description": "Offline-first, privacy-first UK household preparedness PWA: a calm prepare-ahead programme, a plain Crisis mode and a 3D model of your home. No accounts, no tracking.",
+    "category": "Tools",
+    "tags": ["pwa", "offline-first", "privacy", "uk", "three.js", "typescript"],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "status": "live"
   }
 ]
