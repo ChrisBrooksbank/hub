@@ -506,6 +506,36 @@ button {
   background: var(--border);
 }
 
+/* "More" menu in the toolbar */
+
+.chips .more-button[aria-pressed='true'] {
+  border-color: var(--accent);
+}
+
+.more-panel {
+  position: fixed;
+  z-index: 30;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 0.35rem;
+  min-width: 12rem;
+  padding: 0.5rem;
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 16px;
+  box-shadow: 0 10px 30px rgb(0 0 0 / 0.25);
+}
+
+.more-panel[hidden] {
+  display: none;
+}
+
+.more-panel button {
+  justify-content: flex-start;
+  text-align: left;
+}
+
 /* List view */
 
 .list-view {
