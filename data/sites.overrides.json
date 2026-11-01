@@ -310,6 +310,7 @@
     "tags": ["pwa", "offline-first", "privacy", "uk", "three.js", "typescript"],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "status": "live"
+    "status": "live",
+    "url": "https://ready-uk.netlify.app"
   }
 ]
