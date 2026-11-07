@@ -314,5 +314,18 @@
     "status": "live",
     "url": "https://ready-uk.netlify.app",
     "lastPushed": "2026-11-01T11:08:00Z"
+  },
+  {
+    "id": "frogger",
+    "name": "Frogger",
+    "repo": "frogger",
+    "description": "A modern take on the 1981 arcade classic: dodge traffic, ride logs and turtles, and get five frogs home. Keyboard, touch and gamepad; built with TypeScript and canvas.",
+    "category": "Games",
+    "tags": ["game", "arcade", "canvas", "typescript"],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "status": "live",
+    "url": "https://frogger-cb-arcade.netlify.app",
+    "lastPushed": "2026-11-07T10:50:00Z"
   }
 ]
