@@ -327,5 +327,18 @@
     "status": "live",
     "url": "https://frogger-cb-arcade.netlify.app",
     "lastPushed": "2026-11-07T10:50:00Z"
+  },
+  {
+    "id": "spaceinvaders",
+    "name": "Space Invaders",
+    "repo": "spaceinvaders",
+    "description": "The 1978 arcade classic rebuilt for the browser: marching invaders that speed up as they die, erodible shields and a saved high score. TypeScript and canvas, with a history of the original in the README.",
+    "category": "Games",
+    "tags": ["game", "arcade", "canvas", "typescript"],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "status": "live",
+    "url": "https://spaceinvaders-cb-arcade.netlify.app",
+    "lastPushed": "2026-11-07T11:20:00Z"
   }
 ]
