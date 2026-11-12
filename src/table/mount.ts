@@ -15,6 +15,8 @@ export interface TableMountOptions {
   reducedMotion: boolean
   /** Cards per hand on a small screen; omit to show every card at once. */
   handSize?: number
+  /** Height in CSS pixels of the chrome floating over the top of the table. */
+  insetTop?: () => number
 }
 
 export interface TableMount {
@@ -74,6 +76,7 @@ export function mountTable(options: TableMountOptions): TableMount {
     sites,
     reducedMotion,
     handSize: options.handSize,
+    insetTop: options.insetTop,
     onRemaining: (remaining) => {
       more.hidden = remaining <= 0
       more.textContent = `Deal ${Math.min(remaining, options.handSize ?? remaining)} more (${remaining} left in the deck)`

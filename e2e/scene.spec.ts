@@ -25,8 +25,8 @@ test.describe('reduced motion', () => {
 
     const panel = page.locator('.detail-panel')
     let opened = false
-    // Sweep the table until a click lands on a card.
-    for (let row = 1; row < 8 && !opened; row++) {
+    // Sweep the table, below the toolbar that floats over it, until a click lands on a card.
+    for (let row = 3; row < 8 && !opened; row++) {
       for (let column = 1; column < 12 && !opened; column++) {
         await page.mouse.click(box.x + (box.width * column) / 12, box.y + (box.height * row) / 8)
         opened = await panel.isVisible()

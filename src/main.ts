@@ -17,6 +17,11 @@ import {
   type View,
 } from './ui/view-preference'
 
+// The display face is a nicety: fetch it once the page itself has loaded, never in its way.
+const loadDisplayFont = (): void => void import('@fontsource-variable/fraunces/wght.css')
+if (document.readyState === 'complete') loadDisplayFont()
+else window.addEventListener('load', loadDisplayFont, { once: true })
+
 const app = document.getElementById('app')
 if (app) {
   const favourites = createFavourites()
@@ -51,6 +56,7 @@ if (app) {
           sites,
           reducedMotion,
           handSize: window.matchMedia('(max-width: 700px)').matches ? 12 : undefined,
+          insetTop: () => toolbar.element.offsetHeight,
         })
         shuffle = mounted.shuffle
         dispose = mounted.dispose
@@ -58,6 +64,7 @@ if (app) {
       .catch(() => {
         if (cancelled) return
         stage.className = 'stage stage--list'
+        app.dataset.view = 'list'
         toolbar.setView('list')
         dispose = createListView(stage, store, favourites)
       })
@@ -77,6 +84,7 @@ if (app) {
     onView: (next) => {
       if (next === view || (next === 'table' && !webgl)) return
       view = next
+      app.dataset.view = next
       saveView(next)
       toolbar.setView(next)
       unmount()
@@ -85,8 +93,13 @@ if (app) {
   })
   app.prepend(toolbar.element)
   app.append(stage)
-  unmount = mount(view)
   app.dataset.view = view
+  // The toolbar floats over the stage; the list and the detail panel start below it.
+  const measure = (): void =>
+    app.style.setProperty('--chrome-top', `${toolbar.element.offsetHeight}px`)
+  measure()
+  if (typeof ResizeObserver !== 'undefined') new ResizeObserver(measure).observe(toolbar.element)
+  unmount = mount(view)
 
   const pwaBar = createPwaBar(app)
   startPwa({

@@ -197,7 +197,7 @@ export function createDetailPanel(
       element.replaceChildren(...children)
       element.hidden = false
       const first = launch ?? element.querySelector<HTMLElement>('a.launch, button')
-      first?.focus()
+      first?.focus({ preventScroll: true })
     },
     openAbout(about) {
       if (!open) {
@@ -229,7 +229,7 @@ export function createDetailPanel(
       children.push(text('p', about.text), ...links, close)
       element.replaceChildren(...children)
       element.hidden = false
-      ;(links[0] ?? close).focus()
+      ;(links[0] ?? close).focus({ preventScroll: true })
     },
     close: finish,
     dispose() {

@@ -302,6 +302,22 @@ function softDisc(): CanvasTexture {
   return textureOf(canvas)
 }
 
+/** Warm boards near the table fading to the colour of the room, so the floor has no edge. */
+function floorTexture(): CanvasTexture {
+  const canvas = canvasOf(512, 512)
+  const c = canvas.getContext('2d')
+  if (c) {
+    const gradient = c.createRadialGradient(256, 256, 0, 256, 256, 256)
+    gradient.addColorStop(0, '#3a2414')
+    gradient.addColorStop(0.35, '#22150c')
+    gradient.addColorStop(0.7, '#110b07')
+    gradient.addColorStop(1, '#0b0806')
+    c.fillStyle = gradient
+    c.fillRect(0, 0, 512, 512)
+  }
+  return textureOf(canvas)
+}
+
 function roundedRectPath(path: Shape | Path, width: number, height: number, radius: number): void {
   const x = -width / 2
   const y = -height / 2
@@ -812,6 +828,16 @@ export function createDecor(scene: Scene, reducedMotion: boolean, options: Decor
     shadow.rotation.x = -Math.PI / 2
     shadow.position.set(centerX, -1.4, centerZ)
     group.add(shadow)
+
+    // The floor of the room: a pool of lamp light that falls away into the dark.
+    const floor = new Mesh(
+      new PlaneGeometry(width + 90, depth + 90),
+      new MeshBasicMaterial({ map: floorTexture(), depthWrite: false }),
+    )
+    floor.rotation.x = -Math.PI / 2
+    floor.position.set(centerX, -1.6, centerZ)
+    floor.renderOrder = -2
+    group.add(floor)
 
     const inset = TABLE_MARGIN - 0.8
     const corners = [

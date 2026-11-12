@@ -49,6 +49,8 @@ export interface TableOptions {
   favourites: ReadonlySet<string>
   /** Cards dealt at a time on a small screen; omit to deal everything. */
   handSize?: number
+  /** Height in CSS pixels of the chrome floating over the top of the table. */
+  insetTop?: () => number
   /** Called when a stack of chips on the rail is clicked. */
   onChip: (category: string) => void
   /** Called with how many matching cards are still in the deck (to offer "deal more"). */
@@ -102,6 +104,11 @@ interface TableCard {
   muted: boolean
   /** Brightness before the lamp falloff: dimmed when another card is selected. */
   bright: number
+  /** How far the card is tipped up to face the camera (the picked card), radians. */
+  tilt: number
+  /** The hovered card leans under the pointer: rotation about x and z, radians. */
+  leanX: number
+  leanZ: number
   backMaterial: CardMaterial
   edgeMaterial: CardMaterial
   edge: Mesh
@@ -127,6 +134,22 @@ const MUTED_BRIGHTNESS = 0.74
 const DRAG_THRESHOLD = 6
 const ZOOM_MIN = 0.35
 const ZOOM_MAX = 1.5
+/** The picked card is held up toward the camera, and the camera comes in to read it. */
+const SELECT_TILT = 0.4
+const SELECT_DISTANCE = 12.5
+/** Width of the detail panel beside the picked card on a wide screen, CSS pixels. */
+const PANEL_PIXELS = 400
+/** Share of a narrow screen the detail sheet covers. */
+const SHEET_SHARE = 0.48
+const NARROW_PIXELS = 700
+const HOVER_LEAN = 0.09
+/** Opening shot: the camera starts low and far, and cranes up over the table as the cards go out. */
+const INTRO_SECONDS = 3.2
+const INTRO_PITCH = 0.36
+const INTRO_PULL = 0.3
+/** How far the camera drifts with the mouse, as a share of its distance. */
+const SWAY = 0.035
+const GLIDE_DECAY = 4.5
 
 const lerp = (from: number, to: number, t: number): number => from + (to - from) * t
 
@@ -306,6 +329,9 @@ export function createTable(options: TableOptions): Table {
       script: [],
       muted,
       bright: 1,
+      tilt: 0,
+      leanX: 0,
+      leanZ: 0,
       backMaterial,
       edgeMaterial,
       edge,
@@ -358,6 +384,16 @@ export function createTable(options: TableOptions): Table {
   let lastAspect = 0
   let decorKey = ''
   let deck = { x: 0, z: 0 }
+  const insetTop = (): number => options.insetTop?.() ?? 0
+  /** Speed the table keeps gliding at after a drag is let go, world units a second. */
+  const glide = { x: 0, z: 0 }
+  let lastDragAt = 0
+  /** Where the mouse is over the canvas (-1..1), and the camera's eased drift toward it. */
+  const swayTarget = { x: 0, y: 0 }
+  const sway = { x: 0, y: 0 }
+  /** Where on the hovered card the pointer is, from its centre (-1..1). */
+  let lean = { x: 0, y: 0 }
+  let intro = reducedMotion ? 1 : 0
 
   const slotFor = (slot: Slot): Pose => ({
     x: slot.x,
@@ -428,12 +464,16 @@ export function createTable(options: TableOptions): Table {
     }
     refreshTargets()
 
+    // The toolbar floats over the top of the canvas: fit the spread into what is left below it.
+    const viewportHeight = canvas.clientHeight || 800
+    const clear = Math.max(0.4, 1 - insetTop() / viewportHeight)
     fit = fitDistance({
       aspect,
-      viewportHeight: canvas.clientHeight || 800,
+      viewportHeight,
       width: bounds.width,
-      depth: bounds.depth,
+      depth: bounds.depth / clear,
     })
+    glide.x = glide.z = 0
     const chosen = selectedId && shown.includes(selectedId) ? cards.get(selectedId) : undefined
     if (chosen) pan = { x: chosen.base.x - bounds.centerX, z: chosen.base.z - bounds.centerZ }
     clampPan()
@@ -494,16 +534,38 @@ export function createTable(options: TableOptions): Table {
   }
 
   const applyViewTarget = (): void => {
-    viewTarget.x = bounds.centerX + pan.x
-    // On a phone the detail sheet covers the lower half, so lift the selected card above it.
-    const sheet = selectedId && camera.aspect < 1 ? fit * zoom * 0.3 : 0
-    viewTarget.z = bounds.centerZ + pan.z + sheet
-    viewTarget.dist = fit * zoom
+    // Only a card lying face up on the table can be held up; one still in the deck cannot.
+    const chosen = !gathered && selectedId !== null && cards.get(selectedId)?.base.flip === 0
+    const height = Math.max(1, canvas.clientHeight)
+    const span = 2 * Math.tan((camera.fov / 2) * (Math.PI / 180))
+    // Chrome covers part of the canvas: the toolbar on top, and beside or below a picked card
+    // its details. Aim so the subject sits in the middle of what is left.
+    const narrow = canvas.clientWidth <= NARROW_PIXELS
+    const right = chosen && !narrow ? PANEL_PIXELS : 0
+    const bottom = chosen && narrow ? height * SHEET_SHARE : 0
+    // Come in close to a picked card, but never so close it outgrows the gap left for it.
+    const gap = Math.max(120, height - insetTop() - bottom) * 0.9
+    const whole = (CARD_HEIGHT * SELECT_SCALE * height) / (span * gap)
+    const dist = chosen ? Math.max(whole, Math.min(fit * zoom, SELECT_DISTANCE)) : fit * zoom
+    const perPixel = (span * dist) / height
+    const down = (insetTop() - bottom) / 2
+    // A raised card is seen against felt further up the table than where it lies.
+    const raised = chosen ? SELECT_LIFT / Math.tan(PITCH) : 0
+    viewTarget.x = bounds.centerX + pan.x + (right / 2) * perPixel
+    viewTarget.z = bounds.centerZ + pan.z - (down * perPixel) / Math.sin(PITCH) - raised
+    viewTarget.dist = dist
     if (reducedMotion || clock === 0) Object.assign(view, viewTarget)
   }
 
   const placeCamera = (): void => {
-    camera.position.set(view.x, Math.sin(PITCH) * view.dist, view.z + Math.cos(PITCH) * view.dist)
+    const away = (1 - intro) ** 3
+    const pitch = PITCH - INTRO_PITCH * away + sway.y * SWAY
+    const dist = view.dist * (1 + INTRO_PULL * away)
+    camera.position.set(
+      view.x + (sway.x * SWAY - away * 0.16) * dist,
+      Math.sin(pitch) * dist,
+      view.z + Math.cos(pitch) * dist,
+    )
     camera.lookAt(view.x, 0, view.z)
   }
 
@@ -525,9 +587,16 @@ export function createTable(options: TableOptions): Table {
     view.x = lerp(view.x, viewTarget.x, t)
     view.z = lerp(view.z, viewTarget.z, t)
     view.dist = lerp(view.dist, viewTarget.dist, t)
-    for (const card of cards.values()) {
+    for (const [id, card] of cards) {
       if (clock < card.startAt) continue
       const { current, target } = card
+      const tilt = id === selectedId && target.flip === 0 && !gathered ? SELECT_TILT : 0
+      const hovered = id === hoverId && !reducedMotion
+      if (Math.abs(tilt - card.tilt) > 0.002) moving = true
+      card.tilt = lerp(card.tilt, tilt, t)
+      // Far edge and right edge dip under the pointer, as if pressed by a fingertip.
+      card.leanX = lerp(card.leanX, hovered ? -lean.y * HOVER_LEAN : 0, t)
+      card.leanZ = lerp(card.leanZ, hovered ? -lean.x * HOVER_LEAN : 0, t)
       if (card.script.length > 0) {
         moving = true
         stepScript(card)
@@ -560,8 +629,9 @@ export function createTable(options: TableOptions): Table {
       card.faceMaterial.color.setScalar(light)
       card.backMaterial.color.setScalar(light)
       card.edgeMaterial.color.setScalar(light * 0.9)
+      card.root.rotation.x = card.tilt + card.leanX
       card.root.rotation.y = current.yaw
-      card.root.rotation.z = current.roll
+      card.root.rotation.z = current.roll + card.leanZ
       card.root.scale.setScalar(current.scale)
       card.flipper.rotation.z = current.flip
       card.shadow.position.set(current.x + lift * 0.3, -0.005, current.z + lift * 0.45)
@@ -591,6 +661,7 @@ export function createTable(options: TableOptions): Table {
     )
     const hit = hits[0]
     if (!hit) return null
+    if (hit.uv) lean = { x: hit.uv.x * 2 - 1, y: hit.uv.y * 2 - 1 }
     for (const card of cards.values()) if (card.face === hit.object) return card.site.id
     return null
   }
@@ -605,6 +676,8 @@ export function createTable(options: TableOptions): Table {
   /** Hover over the cards first, then the dice and chips on the rail. */
   const hoverAt = (clientX: number, clientY: number): void => {
     const id = pick(clientX, clientY)
+    swayTarget.x = pointer.x
+    swayTarget.y = pointer.y
     setHover(id)
     const tip = id ? null : decor.hover(raycaster)
     canvas.style.cursor = id || tip ? 'pointer' : 'grab'
@@ -624,6 +697,8 @@ export function createTable(options: TableOptions): Table {
   const onPointerDown = (event: PointerEvent): void => {
     canvas.setPointerCapture(event.pointerId)
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
+    glide.x = glide.z = 0
+    lastDragAt = event.timeStamp
     if (pointers.size === 1) {
       dragged = false
       downAt = { x: event.clientX, y: event.clientY }
@@ -662,8 +737,14 @@ export function createTable(options: TableOptions): Table {
     setHover(null)
     canvas.style.cursor = 'grabbing'
     const scale = worldPerPixel()
-    pan.x -= (event.clientX - previous.x) * scale
-    pan.z -= ((event.clientY - previous.y) * scale) / Math.sin(PITCH)
+    const moveX = -(event.clientX - previous.x) * scale
+    const moveZ = -((event.clientY - previous.y) * scale) / Math.sin(PITCH)
+    pan.x += moveX
+    pan.z += moveZ
+    const elapsed = Math.max(0.004, (event.timeStamp - lastDragAt) / 1000)
+    glide.x = lerp(glide.x, moveX / elapsed, 0.5)
+    glide.z = lerp(glide.z, moveZ / elapsed, 0.5)
+    lastDragAt = event.timeStamp
     pointers.set(event.pointerId, { x: event.clientX, y: event.clientY })
     clampPan()
     applyViewTarget()
@@ -674,6 +755,9 @@ export function createTable(options: TableOptions): Table {
     if (!pointers.delete(event.pointerId)) return
     canvas.style.cursor = 'grab'
     if (pointers.size > 0) return
+    // Let go mid-swipe and the table glides on; hold still first and it stays put.
+    if (!dragged || pinchDistance > 0 || reducedMotion || event.timeStamp - lastDragAt > 90)
+      glide.x = glide.z = 0
     if (!dragged) {
       const id = pick(event.clientX, event.clientY)
       // The dice and chips sit on the rail: a click there plays with them, not the cards.
@@ -690,23 +774,38 @@ export function createTable(options: TableOptions): Table {
   }
 
   const onPointerLeave = (event: PointerEvent): void => {
-    if (event.pointerType === 'mouse' && pointers.size === 0) setHover(null)
+    if (event.pointerType !== 'mouse') return
+    swayTarget.x = swayTarget.y = 0
+    if (pointers.size === 0) setHover(null)
   }
 
   const onWheel = (event: WheelEvent): void => {
     event.preventDefault()
-    zoom = MathUtils.clamp(zoom * Math.exp(event.deltaY * 0.0012), ZOOM_MIN, ZOOM_MAX)
+    const next = MathUtils.clamp(zoom * Math.exp(event.deltaY * 0.0012), ZOOM_MIN, ZOOM_MAX)
+    // Zoom about the spot of felt under the pointer, not the middle of the screen.
+    aim(event.clientX, event.clientY)
+    const { origin, direction } = raycaster.ray
+    if (direction.y < -0.01) {
+      const reach = -origin.y / direction.y
+      const keep = 1 - next / zoom
+      pan.x += (origin.x + direction.x * reach - viewTarget.x) * keep
+      pan.z += (origin.z + direction.z * reach - viewTarget.z) * keep
+      clampPan()
+    }
+    zoom = next
+    glide.x = glide.z = 0
     applyViewTarget()
   }
 
   const setSelected = (id: string | null): void => {
     selectedId = id
+    glide.x = glide.z = 0
     const card = id ? cards.get(id) : undefined
     if (card && !gathered) {
       pan = { x: card.base.x - bounds.centerX, z: card.base.z - bounds.centerZ }
       clampPan()
-      applyViewTarget()
     }
+    applyViewTarget()
     refreshTargets()
   }
 
@@ -736,8 +835,24 @@ export function createTable(options: TableOptions): Table {
         })
   observer?.observe(parent)
 
-  engine.onFrame((delta) => {
+  engine.onFrame((elapsed) => {
+    // A stalled frame (a background tab, a slow texture upload) must not teleport the cards.
+    const delta = Math.min(elapsed, 1 / 15)
     clock += delta
+    intro = Math.min(1, intro + delta / INTRO_SECONDS)
+    const ease = reducedMotion ? 1 : 1 - Math.exp(-3 * delta)
+    sway.x = reducedMotion ? 0 : lerp(sway.x, swayTarget.x, ease)
+    sway.y = reducedMotion ? 0 : lerp(sway.y, swayTarget.y, ease)
+    if (pointers.size === 0 && Math.hypot(glide.x, glide.z) > 0.15) {
+      pan.x += glide.x * delta
+      pan.z += glide.z * delta
+      const decay = Math.exp(-GLIDE_DECAY * delta)
+      glide.x *= decay
+      glide.z *= decay
+      clampPan()
+      applyViewTarget()
+      Object.assign(view, { x: viewTarget.x, z: viewTarget.z })
+    }
     if (clipId && clock - clipPaintedAt > 1 / 15) {
       clipPaintedAt = clock
       cards.get(clipId)?.repaint()
