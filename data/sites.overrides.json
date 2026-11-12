@@ -340,5 +340,18 @@
     "status": "live",
     "url": "https://spaceinvaders-cb-arcade.netlify.app",
     "lastPushed": "2026-11-07T11:20:00Z"
+  },
+  {
+    "id": "wyrmfall",
+    "name": "Wyrmfall",
+    "repo": "wyrmfall",
+    "description": "A fast, neon arcade shooter in the spirit of the golden-age cabinets: break a segmented wyrm before it reaches you. Chain multipliers, explosive crystals and a Nova bomb, with every sound synthesised in the browser. Vanilla JS and canvas.",
+    "category": "Games",
+    "tags": ["game", "arcade", "canvas", "javascript"],
+    "language": "JavaScript",
+    "isPrivateRepo": false,
+    "status": "live",
+    "url": "https://chrisbrooksbank.github.io/wyrmfall/",
+    "lastPushed": "2026-11-12T12:00:00Z"
   }
 ]
