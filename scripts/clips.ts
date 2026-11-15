@@ -14,7 +14,7 @@ const CLIPS_DIR = join(ROOT, 'public', 'clips')
 const THUMBS_DIR = join(ROOT, 'public', 'thumbs')
 const OWNER = 'ChrisBrooksbank'
 const CLIP_WIDTH = 480
-const CLIP_SECONDS = 12
+const CLIP_SECONDS = 12 // default cap; raise it per site with --seconds
 /** Where in the clip to take a poster frame by default: past any blank first frames. */
 const POSTER_AT = '1.5'
 
@@ -28,17 +28,27 @@ function gh(args: string[], raw = false): Buffer {
   return execFileSync('gh', ['api', ...accept, ...args], { maxBuffer: 256 * 1024 * 1024 })
 }
 
-/** `--only <id>`, `--force`, and `--poster <id>[@seconds]` (also replace that site's thumbnail). */
-function parseArgs(argv: readonly string[]): { only?: string; force: boolean; posters: string[] } {
-  const options: { only?: string; force: boolean; posters: string[] } = {
+/**
+ * `--only <id>`, `--force`, `--poster <id>[@seconds]` (also replace that site's thumbnail) and
+ * `--seconds <n>` (clip length cap, default 12).
+ */
+function parseArgs(argv: readonly string[]): {
+  only?: string
+  force: boolean
+  posters: string[]
+  seconds: number
+} {
+  const options: { only?: string; force: boolean; posters: string[]; seconds: number } = {
     force: false,
     posters: [],
+    seconds: CLIP_SECONDS,
   }
   for (let i = 0; i < argv.length; i++) {
     const arg = argv[i]
     if (arg === '--force') options.force = true
     else if (arg === '--only') options.only = argv[++i]
     else if (arg === '--poster') options.posters.push(argv[++i] ?? '')
+    else if (arg === '--seconds') options.seconds = Number(argv[++i])
     else throw new Error(`Unknown argument: ${arg}`)
   }
   return options
@@ -66,7 +76,7 @@ try {
     }
     try {
       const readme = gh([`repos/${OWNER}/${site.repo}/readme`], true).toString('utf8')
-      const path = pickGif(readme)
+      const path = pickGif(readme, { owner: OWNER, name: site.repo })
       if (!path) {
         skipped.push(`${site.id} (no gif in the README)`)
         continue
@@ -76,7 +86,7 @@ try {
       execFileSync(
         'ffmpeg',
         [
-          ...['-y', '-loglevel', 'error', '-i', gif, '-t', String(CLIP_SECONDS)],
+          ...['-y', '-loglevel', 'error', '-i', gif, '-t', String(options.seconds)],
           ...['-vf', `fps=12,scale=${CLIP_WIDTH}:-2:flags=lanczos`],
           ...['-c:v', 'libx264', '-crf', '30', '-preset', 'slow', '-pix_fmt', 'yuv420p'],
           ...['-movflags', '+faststart', '-an', target],
