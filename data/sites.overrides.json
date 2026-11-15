@@ -352,5 +352,71 @@
     "status": "live",
     "url": "https://chrisbrooksbank.github.io/wyrmfall/",
     "lastPushed": "2026-11-12T12:00:00Z"
+  },
+  {
+    "id": "adventcalendar",
+    "tags": [],
+    "description": "A magical 3D advent calendar: twenty-four animated doors, snowy friends, sleigh deliveries, monkey swinging games and synthesised carols.",
+    "isPrivateRepo": false,
+    "name": "The Advent House",
+    "repo": "adventcalendar",
+    "language": "JavaScript",
+    "category": "3D & Visual",
+    "lastPushed": "2026-11-15T12:05:12Z"
+  },
+  {
+    "id": "pinball",
+    "tags": [],
+    "description": "Retro arcade pinball in the browser, with a custom physics solver, three.js neon visuals and synthesised sound.",
+    "isPrivateRepo": false,
+    "name": "Neon Knight",
+    "repo": "pinball",
+    "language": "TypeScript",
+    "category": "Games",
+    "lastPushed": "2026-11-08T21:19:43Z"
+  },
+  {
+    "id": "tempest",
+    "tags": [],
+    "description": "A neon arcade tube shooter with keyboard, pointer and touch controls, procedural audio and zero runtime dependencies.",
+    "isPrivateRepo": false,
+    "name": "Tempest",
+    "repo": "tempest",
+    "language": "JavaScript",
+    "category": "Games",
+    "lastPushed": "2026-11-04T18:40:03Z"
+  },
+  {
+    "id": "moose",
+    "tags": [],
+    "description": "A peaceful generative forest where a moose wanders, drinks, eats and sleeps through a full day and night cycle.",
+    "isPrivateRepo": false,
+    "name": "Moose",
+    "repo": "moose",
+    "language": "HTML",
+    "category": "3D & Visual",
+    "lastPushed": "2026-10-19T21:04:39Z"
+  },
+  {
+    "id": "strangeloop",
+    "tags": [],
+    "description": "A model-agnostic C#/.NET agent harness and experimentation playground. Early planning; no working implementation yet.",
+    "isPrivateRepo": false,
+    "name": "StrangeLoop",
+    "repo": "StrangeLoop",
+    "language": null,
+    "category": "Tools",
+    "lastPushed": "2026-11-04T11:25:55Z"
+  },
+  {
+    "id": "angularteach",
+    "tags": [],
+    "description": "An interlinked guide to modern Angular covering standalone components, signals, routing, forms, testing and production architecture.",
+    "isPrivateRepo": false,
+    "name": "Angular Mastery Guide",
+    "repo": "angularteach",
+    "language": null,
+    "category": "Learning",
+    "lastPushed": "2026-06-18T20:27:25Z"
   }
 ]

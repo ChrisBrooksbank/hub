@@ -1,5 +1,17 @@
 [
   {
+    "id": "adventcalendar",
+    "name": "adventcalendar",
+    "url": "https://chrisbrooksbank.github.io/adventcalendar",
+    "repo": "adventcalendar",
+    "description": "A magical three.js advent calendar",
+    "category": "3D & Visual",
+    "tags": [],
+    "language": "JavaScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-11-15T12:05:12Z"
+  },
+  {
     "id": "arcana-veritas",
     "name": "arcana-veritas",
     "url": "https://tarot-table.netlify.app",
@@ -9,7 +21,7 @@
     "tags": [],
     "language": "JavaScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-05T19:12:42Z"
+    "lastPushed": "2026-11-07T11:26:06Z"
   },
   {
     "id": "attention",
@@ -30,7 +42,7 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-06-18T20:27:11Z"
+    "lastPushed": "2026-11-07T11:26:08Z"
   },
   {
     "id": "bookmarkmanager",
@@ -56,7 +68,7 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-19T20:58:25Z"
+    "lastPushed": "2026-11-07T11:26:11Z"
   },
   {
     "id": "brain2",
@@ -82,7 +94,19 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-05T17:22:12Z"
+    "lastPushed": "2026-11-07T11:26:13Z"
+  },
+  {
+    "id": "breadcrumbs",
+    "name": "breadcrumbs",
+    "url": "https://breadcrumbs-trail.netlify.app",
+    "repo": "breadcrumbs",
+    "description": "Map-free GPS breadcrumb PWA for recording and retracing walking routes",
+    "category": "Tools",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-30T21:40:58Z"
   },
   {
     "id": "cm123go",
@@ -103,7 +127,7 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-26T11:11:04Z"
+    "lastPushed": "2026-11-09T13:57:56Z"
   },
   {
     "id": "cmout",
@@ -126,7 +150,7 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-19T20:57:53Z"
+    "lastPushed": "2026-11-07T11:26:17Z"
   },
   {
     "id": "coachandfocus",
@@ -140,7 +164,7 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-06-19T08:38:31Z"
+    "lastPushed": "2026-11-07T11:26:18Z"
   },
   {
     "id": "cookbox",
@@ -152,7 +176,19 @@
     "tags": [],
     "language": "JavaScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-19T20:56:52Z"
+    "lastPushed": "2026-11-07T11:26:20Z"
+  },
+  {
+    "id": "cssteach",
+    "name": "cssteach",
+    "url": "https://cssteach.netlify.app",
+    "repo": "cssteach",
+    "description": "PWA that teaches CSS and SCSS at three skill levels",
+    "category": "Learning",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-30T20:36:18Z"
   },
   {
     "id": "cutlass",
@@ -164,7 +200,7 @@
     "tags": [],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-04T21:03:11Z"
+    "lastPushed": "2026-11-07T11:26:22Z"
   },
   {
     "id": "darkside",
@@ -176,7 +212,7 @@
     "tags": [],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-05T19:40:31Z"
+    "lastPushed": "2026-11-07T14:02:25Z"
   },
   {
     "id": "earth",
@@ -188,7 +224,7 @@
     "tags": [],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-06T15:38:09Z"
+    "lastPushed": "2026-11-07T11:26:25Z"
   },
   {
     "id": "faceit",
@@ -200,7 +236,19 @@
     "tags": [],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-25T20:04:16Z"
+    "lastPushed": "2026-11-07T11:26:27Z"
+  },
+  {
+    "id": "frogger",
+    "name": "frogger",
+    "url": "https://frogger-cb-arcade.netlify.app",
+    "repo": "frogger",
+    "description": "A browser Frogger clone in TypeScript: HTML canvas, Vite, Vitest, Playwright",
+    "category": "3D & Visual",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-11-07T10:51:48Z"
   },
   {
     "id": "gamechanger",
@@ -212,7 +260,7 @@
     "tags": [],
     "language": "HTML",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-06T08:21:29Z"
+    "lastPushed": "2026-11-07T11:26:29Z"
   },
   {
     "id": "inward",
@@ -235,7 +283,19 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-06T14:57:57Z"
+    "lastPushed": "2026-11-07T11:26:31Z"
+  },
+  {
+    "id": "kaleidoscope",
+    "name": "kaleidoscope",
+    "url": "https://kaleidoscope-toy-brooksbank.netlify.app",
+    "repo": "kaleidoscope",
+    "description": "Retro kaleidoscope toy with zen modes",
+    "category": "3D & Visual",
+    "tags": [],
+    "language": "HTML",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-30T20:41:33Z"
   },
   {
     "id": "last-mile",
@@ -247,7 +307,47 @@
     "tags": [],
     "language": "JavaScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-22T17:22:48Z"
+    "lastPushed": "2026-11-07T11:26:34Z"
+  },
+  {
+    "id": "ldnout",
+    "name": "ldnout",
+    "url": "https://ldnout-mvp.netlify.app",
+    "repo": "ldnout",
+    "description": "",
+    "category": "Tools",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-30T21:41:12Z"
+  },
+  {
+    "id": "letshang",
+    "name": "letshang",
+    "url": "https://letshang42.netlify.app",
+    "repo": "letshang",
+    "description": "Community meetup platform — a mobile-first PWA for organizing local groups, events, RSVPs, and real-time notifications. Built with SvelteKit, Supabase, and Tailwind CSS.",
+    "category": "Learning",
+    "tags": [
+      "community",
+      "events",
+      "groups",
+      "local",
+      "mapbox",
+      "meetup",
+      "playwright",
+      "pwa",
+      "realtime",
+      "rsvp",
+      "supabase",
+      "sveltekit",
+      "tailwindcss",
+      "typescript",
+      "vitest"
+    ],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-30T21:41:06Z"
   },
   {
     "id": "life",
@@ -259,7 +359,19 @@
     "tags": [],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-19T20:55:43Z"
+    "lastPushed": "2026-11-07T11:26:35Z"
+  },
+  {
+    "id": "mazes",
+    "name": "mazes",
+    "url": "https://mazes-3d.netlify.app",
+    "repo": "mazes",
+    "description": "PWA: generate, solve, and walk through mazes in 2D/isometric/3D",
+    "category": "Games",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-30T21:41:02Z"
   },
   {
     "id": "mermaid-viewer",
@@ -280,7 +392,7 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-18T23:31:07Z"
+    "lastPushed": "2026-11-07T11:26:38Z"
   },
   {
     "id": "mingolfscore",
@@ -292,7 +404,7 @@
     "tags": [],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-24T12:39:49Z"
+    "lastPushed": "2026-11-07T11:26:40Z"
   },
   {
     "id": "montecarlo",
@@ -304,12 +416,12 @@
     "tags": [],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-07T18:57:11Z"
+    "lastPushed": "2026-11-07T11:26:42Z"
   },
   {
     "id": "myround",
     "name": "myround",
-    "url": "https://myround.netlify.app",
+    "url": "https://myround-app.netlify.app",
     "repo": "myround",
     "description": "A mobile-first PWA for taking drink orders at the pub. Quickly build a round by tapping drinks, save your regulars and their favourites, review order history, and never forget what anyone's having.",
     "category": "Local (Chelmsford)",
@@ -325,7 +437,7 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-06T18:23:36Z"
+    "lastPushed": "2026-11-07T11:26:44Z"
   },
   {
     "id": "noself",
@@ -344,7 +456,7 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-19T20:41:54Z"
+    "lastPushed": "2026-11-07T11:26:46Z"
   },
   {
     "id": "planningpoker",
@@ -365,7 +477,7 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-02T13:17:55Z"
+    "lastPushed": "2026-11-07T11:26:48Z"
   },
   {
     "id": "pockettone",
@@ -377,7 +489,52 @@
     "tags": [],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-06T19:59:20Z"
+    "lastPushed": "2026-11-07T11:26:50Z"
+  },
+  {
+    "id": "poleposition",
+    "name": "poleposition",
+    "url": "https://poleposition-fan-project.netlify.app",
+    "repo": "poleposition",
+    "description": "Pole Position arcade game research and recreation",
+    "category": "Games",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-30T20:41:35Z"
+  },
+  {
+    "id": "prep",
+    "name": "prep",
+    "url": "https://ready-uk.netlify.app",
+    "repo": "prep",
+    "description": "Offline-first, privacy-first UK household preparedness PWA: prepare-ahead programme, plain Crisis mode, 3D home model. No accounts, no tracking.",
+    "category": "3D & Visual",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-11-01T11:08:00Z"
+  },
+  {
+    "id": "selfhypnosis",
+    "name": "selfhypnosis",
+    "url": "https://selfhypnosis.netlify.app",
+    "repo": "selfhypnosis",
+    "description": "Evidence-based guide to self-hypnosis — comprehensive research covering neuroscience, core techniques, step-by-step protocols, therapeutic applications, and safety considerations. Grounded in peer-reviewed studies and meta-analyses.",
+    "category": "Wellbeing",
+    "tags": [
+      "evidence-based",
+      "mental-health",
+      "mindfulness",
+      "neuroscience",
+      "psychology",
+      "relaxation",
+      "research",
+      "self-hypnosis"
+    ],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-11-01T11:37:00Z"
   },
   {
     "id": "shadow-work",
@@ -397,7 +554,19 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-06T14:11:18Z"
+    "lastPushed": "2026-11-07T11:26:52Z"
+  },
+  {
+    "id": "spaceinvaders",
+    "name": "spaceinvaders",
+    "url": "https://spaceinvaders-cb-arcade.netlify.app",
+    "repo": "spaceinvaders",
+    "description": "Space Invaders in the browser: TypeScript + HTML Canvas + Vite, with a history of the 1978 arcade classic",
+    "category": "Games",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-11-07T11:27:48Z"
   },
   {
     "id": "splitit",
@@ -420,7 +589,7 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-02T15:42:31Z"
+    "lastPushed": "2026-11-07T11:26:54Z"
   },
   {
     "id": "two-player-rummy-500",
@@ -438,7 +607,19 @@
     ],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-20T19:55:28Z"
+    "lastPushed": "2026-11-07T11:26:56Z"
+  },
+  {
+    "id": "uk-parliament-learn",
+    "name": "uk-parliament-learn",
+    "url": "https://uk-parliament-learn.netlify.app",
+    "repo": "uk-parliament-learn",
+    "description": "Interactive educational PWA about the UK Parliament and political systems. Content adapts to four audience levels: child, teenager, adult, and researcher. 36 topics across 8 categories with quizzes, glossaries, key dates, and verified video links.",
+    "category": "Parliament",
+    "tags": [],
+    "language": "TypeScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-10-30T20:36:14Z"
   },
   {
     "id": "voicecoach",
@@ -450,7 +631,7 @@
     "tags": [],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-19T14:14:29Z"
+    "lastPushed": "2026-11-07T11:26:57Z"
   },
   {
     "id": "wordgame",
@@ -462,7 +643,7 @@
     "tags": [],
     "language": "TypeScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-19T14:25:17Z"
+    "lastPushed": "2026-11-07T11:26:59Z"
   },
   {
     "id": "world-flags-lab",
@@ -474,6 +655,18 @@
     "tags": [],
     "language": "JavaScript",
     "isPrivateRepo": false,
-    "lastPushed": "2026-10-06T19:47:48Z"
+    "lastPushed": "2026-11-07T11:27:01Z"
+  },
+  {
+    "id": "wyrmfall",
+    "name": "wyrmfall",
+    "url": "https://chrisbrooksbank.github.io/wyrmfall",
+    "repo": "wyrmfall",
+    "description": "WYRMFALL - a fast, neon arcade shooter. Break the wyrm before it reaches you. Zero dependencies.",
+    "category": "Games",
+    "tags": [],
+    "language": "JavaScript",
+    "isPrivateRepo": false,
+    "lastPushed": "2026-11-12T20:53:16Z"
   }
 ]
